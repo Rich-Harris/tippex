@@ -76,6 +76,30 @@ var found = tippex.find( 'var a = 1; // line comment' );
 //    }]
 ```
 
+Sometimes you might need to match a regular expression against the original string, but ignoring comments etc. For that you can use `tippex.match`:
+
+```js
+var code = `
+var a = require('./a.js');
+// var b = require('./b.js');
+`;
+
+var requirePattern = /(\w+) = require\('([^']+)'\)/g; // must have 'g' flag
+var requireStatements = [];
+
+tippex.match( code, requirePattern, ( match, name, source ) => {
+  // this callback will be called for each match that *doesn't* begin
+  // inside a comment, string or regular expression
+  requireStatements.push({ name, source });
+});
+
+console.log( requireStatements );
+// -> [{
+//       name: 'a',
+//       source: './a.js'
+//    }]
+```
+
 
 ## License
 
