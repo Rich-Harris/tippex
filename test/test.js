@@ -11,16 +11,20 @@ const sample = fs.readFileSync( 'test/sample.js', 'utf-8' );
 
 describe( 'tippex', () => {
 	describe( 'find', () => {
+		let found;
+
+		before( () => {
+			found = tippex.find( sample );
+		});
+
 		it( 'finds line comments', () => {
-			const found = tippex.find( sample, {
-				line: true
-			});
+			const lines = found.filter( chunk => chunk.type === 'line' );
 
 			const start = sample.indexOf( '//' );
 			const end = sample.indexOf( '\n', start );
 
-			assert.equal( found.length, 1 );
-			assert.deepEqual( found[0], {
+			assert.equal( lines.length, 1 );
+			assert.deepEqual( lines[0], {
 				start,
 				end,
 				inner: ' line comment',
@@ -30,17 +34,15 @@ describe( 'tippex', () => {
 		});
 
 		it( 'finds block comments', () => {
-			const found = tippex.find( sample, {
-				block: true
-			});
+			const blocks = found.filter( chunk => chunk.type === 'block' );
 
 			const start = sample.indexOf( '/*' );
 			const end = sample.indexOf( '*/' ) + 2;
 
 			const comment = sample.slice( start, end );
 
-			assert.equal( found.length, 1 );
-			assert.deepEqual( found[0], {
+			assert.equal( blocks.length, 1 );
+			assert.deepEqual( blocks[0], {
 				start,
 				end,
 				inner: comment.slice( 2, -2 ),
@@ -50,16 +52,14 @@ describe( 'tippex', () => {
 		});
 
 		it( 'finds regular expressions', () => {
-			const found = tippex.find( sample, {
-				regex: true
-			});
+			const regexes = found.filter( chunk => chunk.type === 'regex' );
 
 			const start = sample.indexOf( '/you' );
 			const end = sample.indexOf( 'cool/' ) + 5;
 			const regex = sample.slice( start, end );
 
-			assert.equal( found.length, 1 );
-			assert.deepEqual( found[0], {
+			assert.equal( regexes.length, 1 );
+			assert.deepEqual( regexes[0], {
 				start,
 				end,
 				inner: regex.slice( 1, -1 ),
@@ -69,17 +69,15 @@ describe( 'tippex', () => {
 		});
 
 		it( 'finds template strings', () => {
-			const found = tippex.find( sample, {
-				template: true
-			});
+			const templateStrings = found.filter( chunk => chunk.type.slice( 0, 8 ) === 'template' );
 
-			assert.equal( found.length, 2 );
+			assert.equal( templateStrings.length, 2 );
 
 			let start = sample.indexOf( '`the' );
 			let end = sample.indexOf( '${' ) + 2;
 			let section = sample.slice( start, end );
 
-			assert.deepEqual( found[0], {
+			assert.deepEqual( templateStrings[0], {
 				start,
 				end,
 				inner: section.slice( 1, -2 ),
@@ -91,7 +89,7 @@ describe( 'tippex', () => {
 			end = sample.indexOf( '\\``' ) + 3;
 			section = sample.slice( start, end );
 
-			assert.deepEqual( found[1], {
+			assert.deepEqual( templateStrings[1], {
 				start,
 				end,
 				inner: section.slice( 1, -1 ),
@@ -101,17 +99,15 @@ describe( 'tippex', () => {
 		});
 
 		it( 'finds normal strings', () => {
-			const found = tippex.find( sample, {
-				string: true
-			});
+			const strings = found.filter( chunk => chunk.type === 'string' );
 
-			assert.equal( found.length, 2 );
+			assert.equal( strings.length, 2 );
 
 			let start = sample.indexOf( "'" );
 			let end = sample.indexOf( "';" ) + 1;
 			let string = sample.slice( start, end );
 
-			assert.deepEqual( found[0], {
+			assert.deepEqual( strings[0], {
 				start,
 				end,
 				inner: string.slice( 1, -1 ),
@@ -123,7 +119,7 @@ describe( 'tippex', () => {
 			end = sample.indexOf( '";' ) + 1;
 			string = sample.slice( start, end );
 
-			assert.deepEqual( found[1], {
+			assert.deepEqual( strings[1], {
 				start,
 				end,
 				inner: string.slice( 1, -1 ),
@@ -134,49 +130,30 @@ describe( 'tippex', () => {
 	});
 
 	describe( 'erase', () => {
-		it( 'erases line comments', () => {
-			const erased = tippex.erase( sample, {
-				line: true
-			});
+		let erased;
 
-			assert.equal( erased.length, sample.length );
+		before( () => {
+			erased = tippex.erase( sample );
+		});
+
+		it( 'erases line comments', () => {
 			assert.equal( erased.indexOf( 'line comment' ), -1 );
 		});
 
 		it( 'erases block comments', () => {
-			const erased = tippex.erase( sample, {
-				block: true
-			});
-
-			assert.equal( erased.length, sample.length );
 			assert.equal( erased.indexOf( 'Multi' ), -1 );
 		});
 
 		it( 'erases regular expressions', () => {
-			const erased = tippex.erase( sample, {
-				regex: true
-			});
-
-			assert.equal( erased.length, sample.length );
 			assert.equal( erased.indexOf( 'ignore' ), -1 );
 		});
 
 		it( 'erases template strings', () => {
-			const erased = tippex.erase( sample, {
-				template: true
-			});
-
-			assert.equal( erased.length, sample.length );
 			assert.equal( erased.indexOf( 'answer is' ), -1 );
 			assert.equal( erased.indexOf( 'backtick' ), -1 );
 		});
 
 		it( 'erases normal strings', () => {
-			const erased = tippex.erase( sample, {
-				string: true
-			});
-
-			assert.equal( erased.length, sample.length );
 			assert.equal( erased.indexOf( 'trying to escape' ), -1 );
 			assert.equal( erased.indexOf( 'escaped' ), -1 );
 		});

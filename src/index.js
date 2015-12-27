@@ -1,4 +1,4 @@
-export function find ( str, types = { line: true, block: true, string: true, template: true, regex: true }) {
+export function find ( str ) {
 	let quote;
 	let escapedFrom;
 	let stack = [];
@@ -30,13 +30,11 @@ export function find ( str, types = { line: true, block: true, string: true, tem
 		if ( char === '\\' ) return escapedFrom = regex, escaped;
 
 		if ( char === '/' ) {
-			if ( types.regex ) {
-				const end = i + 1;
-				const outer = str.slice( start, end );
-				const inner = outer.slice( 1, -1 );
+			const end = i + 1;
+			const outer = str.slice( start, end );
+			const inner = outer.slice( 1, -1 );
 
-				found.push({ start, end, inner, outer, type: 'regex' });
-			}
+			found.push({ start, end, inner, outer, type: 'regex' });
 
 			return base;
 		}
@@ -53,13 +51,11 @@ export function find ( str, types = { line: true, block: true, string: true, tem
 	function string ( char, i ) {
 		if ( char === '\\' ) return escapedFrom = string, escaped;
 		if ( char === quote ) {
-			if ( types.string ) {
-				const end = i + 1;
-				const outer = str.slice( start, end );
-				const inner = outer.slice( 1, -1 );
+			const end = i + 1;
+			const outer = str.slice( start, end );
+			const inner = outer.slice( 1, -1 );
 
-				found.push({ start, end, inner, outer, type: 'string' });
-			}
+			found.push({ start, end, inner, outer, type: 'string' });
 
 			return base;
 		}
@@ -76,13 +72,11 @@ export function find ( str, types = { line: true, block: true, string: true, tem
 		if ( char === '\\' ) return escapedFrom = templateString, escaped;
 
 		if ( char === '`' ) {
-			if ( types.template ) {
-				const end = i + 1;
-				const outer = str.slice( start, end );
-				const inner = outer.slice( 1, -1 );
+			const end = i + 1;
+			const outer = str.slice( start, end );
+			const inner = outer.slice( 1, -1 );
 
-				found.push({ start, end, inner, outer, type: 'templateEnd' });
-			}
+			found.push({ start, end, inner, outer, type: 'templateEnd' });
 
 			return base;
 		}
@@ -92,13 +86,11 @@ export function find ( str, types = { line: true, block: true, string: true, tem
 
 	function templateStringDollar ( char, i ) {
 		if ( char === '{' ) {
-			if ( types.template ) {
-				const end = i + 1;
-				const outer = str.slice( start, end );
-				const inner = outer.slice( 1, -2 );
+			const end = i + 1;
+			const outer = str.slice( start, end );
+			const inner = outer.slice( 1, -2 );
 
-				found.push({ start, end, inner, outer, type: 'templateChunk' });
-			}
+			found.push({ start, end, inner, outer, type: 'templateChunk' });
 
 			stack.push( templateString );
 			return base;
@@ -108,12 +100,10 @@ export function find ( str, types = { line: true, block: true, string: true, tem
 
 	function lineComment ( char, end ) {
 		if ( char === '\n' ) {
-			if ( types.line ) {
-				const outer = str.slice( start, end );
-				const inner = outer.slice( 2 );
+			const outer = str.slice( start, end );
+			const inner = outer.slice( 2 );
 
-				found.push({ start, end, inner, outer, type: 'line' });
-			}
+			found.push({ start, end, inner, outer, type: 'line' });
 
 			return base;
 		}
@@ -128,13 +118,11 @@ export function find ( str, types = { line: true, block: true, string: true, tem
 
 	function blockCommentEnding ( char, i ) {
 		if ( char === '/' ) {
-			if ( types.block ) {
-				const end = i + 1;
-				const outer = str.slice( start, end );
-				const inner = outer.slice( 2, -2 );
+			const end = i + 1;
+			const outer = str.slice( start, end );
+			const inner = outer.slice( 2, -2 );
 
-				found.push({ start, end, inner, outer, type: 'block' });
-			}
+			found.push({ start, end, inner, outer, type: 'block' });
 
 			return base;
 		}
@@ -164,8 +152,8 @@ const erasers = {
 	templateEnd: chunk => chunk.outer[0] + spaces( chunk.inner.length ) + '`'
 };
 
-export function erase ( str, options ) {
-	const found = find( str, options );
+export function erase ( str ) {
+	const found = find( str );
 
 	let erased = '';
 	let charIndex = 0;
