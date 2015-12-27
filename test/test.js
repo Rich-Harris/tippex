@@ -1,15 +1,18 @@
 import * as fs from 'fs';
 import { describe, it } from 'mocha';
 import * as assert from 'assert';
+import sms from 'source-map-support';
 
-import * as redacter from '../';
+import * as tippex from '../';
+
+sms.install();
 
 const sample = fs.readFileSync( 'test/sample.js', 'utf-8' );
 
-describe( 'redacter', () => {
+describe( 'tippex', () => {
 	describe( 'find', () => {
 		it( 'finds line comments', () => {
-			const found = redacter.find( sample, {
+			const found = tippex.find( sample, {
 				line: true
 			});
 
@@ -27,7 +30,7 @@ describe( 'redacter', () => {
 		});
 
 		it( 'finds block comments', () => {
-			const found = redacter.find( sample, {
+			const found = tippex.find( sample, {
 				block: true
 			});
 
@@ -47,7 +50,7 @@ describe( 'redacter', () => {
 		});
 
 		it( 'finds regular expressions', () => {
-			const found = redacter.find( sample, {
+			const found = tippex.find( sample, {
 				regex: true
 			});
 
@@ -66,7 +69,7 @@ describe( 'redacter', () => {
 		});
 
 		it( 'finds template strings', () => {
-			const found = redacter.find( sample, {
+			const found = tippex.find( sample, {
 				template: true
 			});
 
@@ -81,7 +84,7 @@ describe( 'redacter', () => {
 				end,
 				inner: section.slice( 1, -2 ),
 				outer: section,
-				type: 'template'
+				type: 'templateChunk'
 			});
 
 			start = sample.indexOf( '}.' );
@@ -93,12 +96,12 @@ describe( 'redacter', () => {
 				end,
 				inner: section.slice( 1, -1 ),
 				outer: section,
-				type: 'template'
+				type: 'templateEnd'
 			});
 		});
 
 		it( 'finds normal strings', () => {
-			const found = redacter.find( sample, {
+			const found = tippex.find( sample, {
 				string: true
 			});
 
@@ -127,6 +130,55 @@ describe( 'redacter', () => {
 				outer: string,
 				type: 'string'
 			});
+		});
+	});
+
+	describe( 'erase', () => {
+		it( 'erases line comments', () => {
+			const erased = tippex.erase( sample, {
+				line: true
+			});
+
+			assert.equal( erased.length, sample.length );
+			assert.equal( erased.indexOf( 'line comment' ), -1 );
+		});
+
+		it( 'erases block comments', () => {
+			const erased = tippex.erase( sample, {
+				block: true
+			});
+
+			assert.equal( erased.length, sample.length );
+			assert.equal( erased.indexOf( 'Multi' ), -1 );
+		});
+
+		it( 'erases regular expressions', () => {
+			const erased = tippex.erase( sample, {
+				regex: true
+			});
+
+			assert.equal( erased.length, sample.length );
+			assert.equal( erased.indexOf( 'ignore' ), -1 );
+		});
+
+		it( 'erases template strings', () => {
+			const erased = tippex.erase( sample, {
+				template: true
+			});
+
+			assert.equal( erased.length, sample.length );
+			assert.equal( erased.indexOf( 'answer is' ), -1 );
+			assert.equal( erased.indexOf( 'backtick' ), -1 );
+		});
+
+		it( 'erases normal strings', () => {
+			const erased = tippex.erase( sample, {
+				string: true
+			});
+
+			assert.equal( erased.length, sample.length );
+			assert.equal( erased.indexOf( 'trying to escape' ), -1 );
+			assert.equal( erased.indexOf( 'escaped' ), -1 );
 		});
 	});
 });

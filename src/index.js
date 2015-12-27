@@ -81,7 +81,7 @@ export function find ( str, types = { line: true, block: true, string: true, tem
 				const outer = str.slice( start, end );
 				const inner = outer.slice( 1, -1 );
 
-				found.push({ start, end, inner, outer, type: 'template' });
+				found.push({ start, end, inner, outer, type: 'templateEnd' });
 			}
 
 			return base;
@@ -97,7 +97,7 @@ export function find ( str, types = { line: true, block: true, string: true, tem
 				const outer = str.slice( start, end );
 				const inner = outer.slice( 1, -2 );
 
-				found.push({ start, end, inner, outer, type: 'template' });
+				found.push({ start, end, inner, outer, type: 'templateChunk' });
 			}
 
 			stack.push( templateString );
@@ -149,10 +149,35 @@ export function find ( str, types = { line: true, block: true, string: true, tem
 	return found;
 }
 
-export function remove () {
-	throw new Error( 'TODO' );
+function spaces ( count ) {
+	let spaces = '';
+	while ( count-- ) spaces += ' ';
+	return spaces;
 }
 
-export function replace () {
-	throw new Error( 'TODO' );
+const erasers = {
+	string: chunk => chunk.outer[0] + spaces( chunk.inner.length ) + chunk.outer[0],
+	line: chunk => spaces( chunk.outer.length ),
+	block: chunk => chunk.outer.split( '\n' ).map( line => spaces( line.length ) ).join( '\n' ),
+	regex: chunk => '/' + spaces( chunk.inner.length ) + '/',
+	templateChunk: chunk => chunk.outer[0] + spaces( chunk.inner.length ) + '${',
+	templateEnd: chunk => chunk.outer[0] + spaces( chunk.inner.length ) + '`'
+};
+
+export function erase ( str, options ) {
+	const found = find( str, options );
+
+	let erased = '';
+	let charIndex = 0;
+
+	for ( let i = 0; i < found.length; i += 1 ) {
+		const chunk = found[i];
+		erased += str.slice( charIndex, chunk.start );
+		erased += erasers[ chunk.type ]( chunk );
+
+		charIndex = chunk.end;
+	}
+
+	erased += str.slice( charIndex );
+	return erased;
 }
