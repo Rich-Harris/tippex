@@ -1,10 +1,17 @@
 {
   "name": "tippex",
   "description": "Find strings and comments in JavaScript code",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "author": "Rich Harris",
   "main": "dist/tippex.umd.js",
   "jsnext:main": "dist/tippex.es6.js",
+  "files": [
+    "src",
+    "dist",
+    "README.md"
+  ],
+  "license": "MIT",
+  "repository": "https://github.com/Rich-Harris/tippex",
   "scripts": {
     "test": "mocha --compilers js:babel-register",
     "pretest": "npm run build:umd",
