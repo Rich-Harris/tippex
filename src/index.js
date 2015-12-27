@@ -169,3 +169,30 @@ export function erase ( str ) {
 	erased += str.slice( charIndex );
 	return erased;
 }
+
+export function match ( str, pattern, callback ) {
+	if ( !pattern.global ) throw new Error( 'regular expression must have the g (global) flag' );
+
+	const found = find( str );
+
+	let match;
+	let chunkIndex = 0;
+
+	while ( match = pattern.exec( str ) ) {
+		let chunk;
+
+		do {
+			chunk = found[ chunkIndex ];
+
+			if ( chunk && chunk.end < match.index ) {
+				chunkIndex += 1;
+			} else {
+				break;
+			}
+		} while ( chunk );
+
+		if ( !chunk || chunk.start > match.index ) {
+			callback.apply( null, match );
+		}
+	}
+}

@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import * as path from 'path';
 import { describe, it } from 'mocha';
 import * as assert from 'assert';
 import sms from 'source-map-support';
@@ -7,21 +8,24 @@ import * as tippex from '../';
 
 sms.install();
 
-const sample = fs.readFileSync( 'test/sample.js', 'utf-8' );
+let samples = {};
+fs.readdirSync( 'test/samples' ).forEach( file => {
+	samples[ file.replace( '.js', '' ) ] = fs.readFileSync( `test/samples/${file}`, 'utf-8' );
+});
 
 describe( 'tippex', () => {
 	describe( 'find', () => {
 		let found;
 
 		before( () => {
-			found = tippex.find( sample );
+			found = tippex.find( samples.misc );
 		});
 
 		it( 'finds line comments', () => {
 			const lines = found.filter( chunk => chunk.type === 'line' );
 
-			const start = sample.indexOf( '//' );
-			const end = sample.indexOf( '\n', start );
+			const start = samples.misc.indexOf( '//' );
+			const end = samples.misc.indexOf( '\n', start );
 
 			assert.equal( lines.length, 1 );
 			assert.deepEqual( lines[0], {
@@ -36,10 +40,10 @@ describe( 'tippex', () => {
 		it( 'finds block comments', () => {
 			const blocks = found.filter( chunk => chunk.type === 'block' );
 
-			const start = sample.indexOf( '/*' );
-			const end = sample.indexOf( '*/' ) + 2;
+			const start = samples.misc.indexOf( '/*' );
+			const end = samples.misc.indexOf( '*/' ) + 2;
 
-			const comment = sample.slice( start, end );
+			const comment = samples.misc.slice( start, end );
 
 			assert.equal( blocks.length, 1 );
 			assert.deepEqual( blocks[0], {
@@ -54,9 +58,9 @@ describe( 'tippex', () => {
 		it( 'finds regular expressions', () => {
 			const regexes = found.filter( chunk => chunk.type === 'regex' );
 
-			const start = sample.indexOf( '/you' );
-			const end = sample.indexOf( 'cool/' ) + 5;
-			const regex = sample.slice( start, end );
+			const start = samples.misc.indexOf( '/you' );
+			const end = samples.misc.indexOf( 'cool/' ) + 5;
+			const regex = samples.misc.slice( start, end );
 
 			assert.equal( regexes.length, 1 );
 			assert.deepEqual( regexes[0], {
@@ -73,9 +77,9 @@ describe( 'tippex', () => {
 
 			assert.equal( templateStrings.length, 2 );
 
-			let start = sample.indexOf( '`the' );
-			let end = sample.indexOf( '${' ) + 2;
-			let section = sample.slice( start, end );
+			let start = samples.misc.indexOf( '`the' );
+			let end = samples.misc.indexOf( '${' ) + 2;
+			let section = samples.misc.slice( start, end );
 
 			assert.deepEqual( templateStrings[0], {
 				start,
@@ -85,9 +89,9 @@ describe( 'tippex', () => {
 				type: 'templateChunk'
 			});
 
-			start = sample.indexOf( '}.' );
-			end = sample.indexOf( '\\``' ) + 3;
-			section = sample.slice( start, end );
+			start = samples.misc.indexOf( '}.' );
+			end = samples.misc.indexOf( '\\``' ) + 3;
+			section = samples.misc.slice( start, end );
 
 			assert.deepEqual( templateStrings[1], {
 				start,
@@ -103,9 +107,9 @@ describe( 'tippex', () => {
 
 			assert.equal( strings.length, 2 );
 
-			let start = sample.indexOf( "'" );
-			let end = sample.indexOf( "';" ) + 1;
-			let string = sample.slice( start, end );
+			let start = samples.misc.indexOf( "'" );
+			let end = samples.misc.indexOf( "';" ) + 1;
+			let string = samples.misc.slice( start, end );
 
 			assert.deepEqual( strings[0], {
 				start,
@@ -115,9 +119,9 @@ describe( 'tippex', () => {
 				type: 'string'
 			});
 
-			start = sample.indexOf( '"' );
-			end = sample.indexOf( '";' ) + 1;
-			string = sample.slice( start, end );
+			start = samples.misc.indexOf( '"' );
+			end = samples.misc.indexOf( '";' ) + 1;
+			string = samples.misc.slice( start, end );
 
 			assert.deepEqual( strings[1], {
 				start,
@@ -133,7 +137,7 @@ describe( 'tippex', () => {
 		let erased;
 
 		before( () => {
-			erased = tippex.erase( sample );
+			erased = tippex.erase( samples.misc );
 		});
 
 		it( 'erases line comments', () => {
@@ -156,6 +160,30 @@ describe( 'tippex', () => {
 		it( 'erases normal strings', () => {
 			assert.equal( erased.indexOf( 'trying to escape' ), -1 );
 			assert.equal( erased.indexOf( 'escaped' ), -1 );
+		});
+	});
+
+	describe( 'match', () => {
+		it( 'matches regular expressions against the original string', () => {
+			const importPattern = /import (\w+) from '([^']+)'/g;
+
+			let results = [];
+			tippex.match( samples.imports, importPattern, ( match, name, source ) => {
+				results.push({ match, name, source });
+			});
+
+			assert.deepEqual( results, [
+				{
+					match: "import a from './a.js'",
+					name: 'a',
+					source: './a.js'
+				},
+				{
+					match: "import c from './c.js'",
+					name: 'c',
+					source: './c.js'
+				}
+			]);
 		});
 	});
 });
