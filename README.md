@@ -80,25 +80,27 @@ Sometimes you might need to match a regular expression against the original stri
 
 ```js
 var code = `
-var a = require('./a.js');
-// var b = require('./b.js');
+import a from './a.js';
+// import b from './b.js'; TODO do we need this?
 `;
 
-var requirePattern = /(\w+) = require\('([^']+)'\)/g; // must have 'g' flag
-var requireStatements = [];
+var importPattern = /import (.+?) from '([^']+)'/g; // must have 'g' flag
+var importDeclarations = [];
 
-tippex.match( code, requirePattern, ( match, name, source ) => {
+tippex.match( code, importPattern, ( match, name, source ) => {
   // this callback will be called for each match that *doesn't* begin
   // inside a comment, string or regular expression
-  requireStatements.push({ name, source });
+  importDeclarations.push({ name, source });
 });
 
-console.log( requireStatements );
+console.log( importDeclarations );
 // -> [{
 //       name: 'a',
 //       source: './a.js'
 //    }]
 ```
+
+(A complete regular expression for ES6 imports would be a bit more complicated; this is for illustrative purposes.)
 
 
 ## License
