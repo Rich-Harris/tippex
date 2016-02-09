@@ -104,6 +104,15 @@ console.log( importDeclarations );
 
 (A complete regular expression for ES6 imports would be a bit more complicated; this is for illustrative purposes.)
 
+To replace occurrences of a pattern that aren't inside strings or comments, use `tippex.replace`:
+
+```js
+code = tippex.replace( code, importPattern, ( match, name, source ) => {
+  return `var ${name} = require('${source}')`;
+});
+```
+
+
 
 ## License
 
