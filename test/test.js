@@ -185,5 +185,34 @@ describe( 'tippex', () => {
 				}
 			]);
 		});
+
+		it( 'matches regular expressions without the global flag', () => {
+			const importPattern = /import (\w+) from '([^']+)'/;
+
+			let results = [];
+			tippex.match( samples.imports, importPattern, ( match, name, source ) => {
+				results.push({ match, name, source });
+			});
+
+			assert.deepEqual( results, [
+				{
+					match: "import a from './a.js'",
+					name: 'a',
+					source: './a.js'
+				}
+			]);
+		});
+	});
+
+	describe( 'replace', () => {
+		it( 'replaces a pattern', () => {
+			const importPattern = /import (\w+) from '([^']+)'/g;
+
+			var result = tippex.replace( samples.imports, importPattern, ( match, name, source ) => {
+				return `var ${name} = require('${source}')`;
+			});
+
+			assert.equal( result, samples.requires );
+		});
 	});
 });

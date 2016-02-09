@@ -170,8 +170,20 @@ export function erase ( str ) {
 	return erased;
 }
 
+function makeGlobalRegExp ( original ) {
+	let flags = 'g';
+
+	if ( original.multiline ) flags += 'm';
+	if ( original.ignoreCase ) flags += 'i';
+	if ( original.sticky ) flags += 'y';
+	if ( original.unicode ) flags += 'u';
+
+	return new RegExp( original.source, flags );
+}
+
 export function match ( str, pattern, callback ) {
-	if ( !pattern.global ) throw new Error( 'regular expression must have the g (global) flag' );
+	const g = pattern.global;
+	if ( !g ) pattern = makeGlobalRegExp( pattern );
 
 	const found = find( str );
 
@@ -192,7 +204,35 @@ export function match ( str, pattern, callback ) {
 		} while ( chunk );
 
 		if ( !chunk || chunk.start > match.index ) {
-			callback.apply( null, match );
+			const args = [].slice.call( match ).concat( match.index, str );
+			callback.apply( null, args );
+			if ( !g ) break;
 		}
 	}
+}
+
+export function replace ( str, pattern, callback ) {
+	let replacements = [];
+
+	match( str, pattern, function ( match ) {
+		const start = arguments[ arguments.length - 2 ];
+		const end = start + match.length;
+		const content = callback.apply( null, arguments );
+
+		replacements.push({ start, end, content });
+	});
+
+	let replaced = '';
+	let lastIndex = 0;
+
+	for ( let i = 0; i < replacements.length; i += 1 ) {
+		const { start, end, content } = replacements[i];
+		replaced += str.slice( lastIndex, start ) + content;
+
+		lastIndex = end;
+	}
+
+	replaced += str.slice( lastIndex );
+
+	return replaced;
 }
