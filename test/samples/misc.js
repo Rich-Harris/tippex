@@ -1,4 +1,5 @@
 const answer = 42; // line comment
+const moarAnswer = (7*4)/(2/3)
 
 /*
   (•_•)
