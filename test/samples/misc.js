@@ -21,6 +21,8 @@ const templateString = `the answer is ${answer}. This is a backtick: \``;
 
 const regex = /you can ignore\/[/]skip me, it's cool/;
 
+if ( a / b ) /foo/;
+
 function calc (data) {
   for (i = 0; i < num; i++)
     something = item[i] / total * 100
