@@ -31,7 +31,9 @@ export function find ( str ) {
 		if ( char === '{' ) return stack.push( base ), base;
 		if ( char === '}' ) return start = i, stack.pop();
 
-		pfixOp = ( char === '+' && str[ i - 1 ] === '+' ) || ( char === '-' && str[ i - 1 ] === '-' );
+		if ( !( pfixOp && /\W/.test( char ) ) ) {
+			pfixOp = ( char === '+' && str[ i - 1 ] === '+' ) || ( char === '-' && str[ i - 1 ] === '-' );
+		}
 
 		return base;
 	}
