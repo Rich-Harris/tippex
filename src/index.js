@@ -1,7 +1,6 @@
 const keywords = /(case|delete|do|else|in|instanceof|new|return|throw|typeof|void)\s*$/;
-const punctuators = /(\{|\(|\[\.|;|,|<|>|<=|>=|==|!=|===|!==|\+|-|\*\%|<<|>>|>>>|&|\||\^|!|~|&&|\|\||\?|:|=|\+=|-=|\*=|%=|<<=|>>=|>>>=|&=|\|=|\^=|\/=|\/)\s*$/;
+const punctuators = /(^|\{|\(|\[\.|;|,|<|>|<=|>=|==|!=|===|!==|\+|-|\*\%|<<|>>|>>>|&|\||\^|!|~|&&|\|\||\?|:|=|\+=|-=|\*=|%=|<<=|>>=|>>>=|&=|\|=|\^=|\/=|\/)\s*$/;
 const ambiguous = /(\}|\)|\+\+|--)\s*$/;
-const counterparts = { '}': '{', ')': '(' };
 
 export function find ( str ) {
 	let quote;
@@ -180,10 +179,7 @@ function tokenClosesExpression ( substr, found ) {
 		if ( substr.slice( i - 2, i ) === 'if' || substr.slice( i - 5, i ) === 'while' ) return false;
 	}
 
-	else {
-		throw new Error( 'TODO handle }, ++ and -- tokens immediately followed by / character' );
-	}
-
+	// TODO handle }, ++ and -- tokens immediately followed by / character
 	return true;
 }
 

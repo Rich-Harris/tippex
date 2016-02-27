@@ -1,5 +1,4 @@
 import * as fs from 'fs';
-import * as path from 'path';
 import { describe, it } from 'mocha';
 import * as assert from 'assert';
 import sms from 'source-map-support';
@@ -62,7 +61,7 @@ describe( 'tippex', () => {
 			const end = samples.misc.indexOf( 'cool/' ) + 5;
 			const regex = samples.misc.slice( start, end );
 
-			assert.equal( regexes.length, 1 );
+			assert.equal( regexes.length, 2 );
 			assert.deepEqual( regexes[0], {
 				start,
 				end,
@@ -160,6 +159,11 @@ describe( 'tippex', () => {
 		it( 'erases normal strings', () => {
 			assert.equal( erased.indexOf( 'trying to escape' ), -1 );
 			assert.equal( erased.indexOf( 'escaped' ), -1 );
+		});
+
+		it( 'handles tricky regex/division cases', () => {
+			const erased = tippex.erase( samples.regexDivisionBefore );
+			assert.equal( erased, samples.regexDivisionAfter );
 		});
 	});
 
