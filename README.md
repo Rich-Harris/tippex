@@ -113,6 +113,11 @@ code = tippex.replace( code, importPattern, ( match, name, source ) => {
 ```
 
 
+## Known issues
+
+It's extremely difficult to distinguish between regular expression literals and division operators in certain edge cases at the lexical level. Fortunately, these cases are rare and generally somewhat contrived. If you encounter one in the wild, please raise an issue so we can try to accommodate it.
+
+
 
 ## License
 

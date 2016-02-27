@@ -1,6 +1,11 @@
+const keywords = /(case|delete|do|else|in|instanceof|new|return|throw|typeof|void)\s*$/;
+const punctuators = /(^|\{|\(|\[\.|;|,|<|>|<=|>=|==|!=|===|!==|\+|-|\*\%|<<|>>|>>>|&|\||\^|!|~|&&|\|\||\?|:|=|\+=|-=|\*=|%=|<<=|>>=|>>>=|&=|\|=|\^=|\/=|\/)\s*$/;
+const ambiguous = /(\}|\)|\+\+|--)\s*$/;
+
 export function find ( str ) {
 	let quote;
 	let escapedFrom;
+	let regexEnabled = true;
 	let stack = [];
 
 	let start;
@@ -8,7 +13,17 @@ export function find ( str ) {
 	let state = base;
 
 	function base ( char, i ) {
-		if ( char === '/' ) return start = i, slash;
+		if ( char === '/' ) {
+			// could be start of regex literal OR division punctuator. Solution via
+			// http://stackoverflow.com/questions/5519596/when-parsing-javascript-what-determines-the-meaning-of-a-slash/27120110#27120110
+			const substr = str.substr( 0, i );
+			if ( keywords.test( substr ) || punctuators.test( substr ) ) regexEnabled = true;
+			else if ( ambiguous.test( substr ) && !tokenClosesExpression( substr, found ) ) regexEnabled = true; // TODO save this determination for when it's necessary?
+			else regexEnabled = false;
+
+			return start = i, slash;
+		}
+
 		if ( char === '"' || char === "'" ) return start = i, quote = char, string;
 		if ( char === '`' ) return start = i, templateString;
 
@@ -21,8 +36,8 @@ export function find ( str ) {
 	function slash ( char ) {
 		if ( char === '/' ) return lineComment;
 		if ( char === '*' ) return blockComment;
-		if ( char === '[' ) return regexCharacter;
-		return regex;
+		if ( char === '[' ) return regexEnabled ? regexCharacter : base;
+		return regexEnabled ? regex : base;
 	}
 
 	function regex ( char, i ) {
@@ -137,6 +152,37 @@ export function find ( str ) {
 	return found;
 }
 
+function tokenClosesExpression ( substr, found ) {
+	substr = _erase( substr, found );
+
+	const token = ambiguous.exec( substr )[1];
+
+	if ( token === ')' ) {
+		let count = 0;
+		let i = substr.length;
+		while ( i-- ) {
+			if ( substr[i] === ')' ) {
+				count += 1;
+			}
+
+			if ( substr[i] === '(' ) {
+				count -= 1;
+				if ( count === 0 ) {
+					i -= 1;
+					break;
+				}
+			}
+		}
+
+		// if parenthesized expression is immediately preceded by `if`/`while`, it's not closing an expression
+		while ( /\s/.test( substr[i - 1] ) ) i -= 1;
+		if ( substr.slice( i - 2, i ) === 'if' || substr.slice( i - 5, i ) === 'while' ) return false;
+	}
+
+	// TODO handle }, ++ and -- tokens immediately followed by / character
+	return true;
+}
+
 function spaces ( count ) {
 	let spaces = '';
 	while ( count-- ) spaces += ' ';
@@ -154,7 +200,10 @@ const erasers = {
 
 export function erase ( str ) {
 	const found = find( str );
+	return _erase( str, found );
+}
 
+function _erase ( str, found ) {
 	let erased = '';
 	let charIndex = 0;
 
