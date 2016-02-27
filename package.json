@@ -1,7 +1,7 @@
 {
   "name": "tippex",
   "description": "Find and erase strings and comments in JavaScript code",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "author": "Rich Harris",
   "main": "dist/tippex.umd.js",
   "jsnext:main": "dist/tippex.es6.js",
@@ -18,7 +18,8 @@
     "build": "npm run build:umd && npm run build:es6",
     "build:umd": "rollup -c -f umd -o dist/tippex.umd.js",
     "build:es6": "rollup -c -f es6 -o dist/tippex.es6.js",
-    "prepublish": "rm -rf dist && npm test && npm run build:es6"
+    "prepublish": "npm run lint && rm -rf dist && npm test && npm run build:es6",
+    "lint": "eslint src"
   },
   "devDependencies": {
     "babel-preset-es2015": "^6.3.13",
