@@ -6,6 +6,7 @@ export function find ( str ) {
 	let quote;
 	let escapedFrom;
 	let regexEnabled = true;
+	let pfixOp = false;
 	let stack = [];
 
 	let start;
@@ -30,6 +31,8 @@ export function find ( str ) {
 		if ( char === '{' ) return stack.push( base ), base;
 		if ( char === '}' ) return start = i, stack.pop();
 
+		pfixOp = ( char === '+' && str[ i - 1 ] === '+' ) || ( char === '-' && str[ i - 1 ] === '-' );
+
 		return base;
 	}
 
@@ -37,7 +40,7 @@ export function find ( str ) {
 		if ( char === '/' ) return lineComment;
 		if ( char === '*' ) return blockComment;
 		if ( char === '[' ) return regexEnabled ? regexCharacter : base;
-		return regexEnabled ? regex : base;
+		return regexEnabled && !pfixOp ? regex : base;
 	}
 
 	function regex ( char, i ) {
