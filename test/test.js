@@ -165,6 +165,14 @@ describe( 'tippex', () => {
 			const erased = tippex.erase( samples.regexDivisionBefore );
 			assert.equal( erased, samples.regexDivisionAfter );
 		});
+
+		it( 'handles template strings', () => {
+			const erased = tippex.erase( samples.templateStringBefore );
+			assert.equal( erased, samples.templateStringAfter );
+
+			const erasedTwice = tippex.erase( samples.templateStringAfter );
+			assert.equal( erasedTwice, samples.templateStringAfter );
+		});
 	});
 
 	describe( 'match', () => {
