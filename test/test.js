@@ -143,6 +143,10 @@ describe( 'tippex', () => {
 			assert.equal( erased.indexOf( 'line comment' ), -1 );
 		});
 
+		it( 'erases line comments w/ parens #8', () => {
+			assert.equal( tippex.erase('//)\n//\n'), '   \n  \n' );
+		});
+
 		it( 'erases block comments', () => {
 			assert.equal( erased.indexOf( 'Multi' ), -1 );
 		});

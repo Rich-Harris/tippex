@@ -160,7 +160,8 @@ export function find ( str ) {
 function tokenClosesExpression ( substr, found ) {
 	substr = _erase( substr, found );
 
-	const token = ambiguous.exec( substr )[1];
+	let token = ambiguous.exec( substr );
+	if ( token ) token = token[1];
 
 	if ( token === ')' ) {
 		let count = 0;
