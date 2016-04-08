@@ -1,5 +1,11 @@
 # Tippex changelog
 
+## 2.1.1
+
+* Handle `$` in template literals ([#1](https://github.com/Rich-Harris/tippex/issues/1))
+* Fix crash on specific comments ([#8](https://github.com/Rich-Harris/tippex/issues/8))
+
+
 ## 2.1.0
 
 * Handle prefix `++`/`--` operators followed by `/` ([#5](https://github.com/Rich-Harris/tippex/pull/5))
