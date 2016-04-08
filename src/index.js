@@ -115,7 +115,7 @@ export function find ( str ) {
 			stack.push( templateString );
 			return base;
 		}
-		return templateString;
+		return templateString( char, i );
 	}
 
 	function lineComment ( char, end ) {
