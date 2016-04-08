@@ -1,30 +1,32 @@
-import * as fs from 'fs';
-import { describe, it } from 'mocha';
-import * as assert from 'assert';
-import sms from 'source-map-support';
+var fs = require( 'fs' );
+var assert = require( 'assert' );
+var Mocha = require( 'mocha' );
 
-import * as tippex from '../';
+var tippex = require( '../' );
 
-sms.install();
+require( 'source-map-support' ).install();
 
-let samples = {};
+var describe = Mocha.describe;
+var it = Mocha.it;
+
+var samples = {};
 fs.readdirSync( 'test/samples' ).forEach( file => {
 	samples[ file.replace( '.js', '' ) ] = fs.readFileSync( `test/samples/${file}`, 'utf-8' );
 });
 
 describe( 'tippex', () => {
 	describe( 'find', () => {
-		let found;
+		var found;
 
 		before( () => {
 			found = tippex.find( samples.misc );
 		});
 
 		it( 'finds line comments', () => {
-			const lines = found.filter( chunk => chunk.type === 'line' );
+			var lines = found.filter( chunk => chunk.type === 'line' );
 
-			const start = samples.misc.indexOf( '//' );
-			const end = samples.misc.indexOf( '\n', start );
+			var start = samples.misc.indexOf( '//' );
+			var end = samples.misc.indexOf( '\n', start );
 
 			assert.equal( lines.length, 1 );
 			assert.deepEqual( lines[0], {
@@ -37,12 +39,12 @@ describe( 'tippex', () => {
 		});
 
 		it( 'finds block comments', () => {
-			const blocks = found.filter( chunk => chunk.type === 'block' );
+			var blocks = found.filter( chunk => chunk.type === 'block' );
 
-			const start = samples.misc.indexOf( '/*' );
-			const end = samples.misc.indexOf( '*/' ) + 2;
+			var start = samples.misc.indexOf( '/*' );
+			var end = samples.misc.indexOf( '*/' ) + 2;
 
-			const comment = samples.misc.slice( start, end );
+			var comment = samples.misc.slice( start, end );
 
 			assert.equal( blocks.length, 1 );
 			assert.deepEqual( blocks[0], {
@@ -55,11 +57,11 @@ describe( 'tippex', () => {
 		});
 
 		it( 'finds regular expressions', () => {
-			const regexes = found.filter( chunk => chunk.type === 'regex' );
+			var regexes = found.filter( chunk => chunk.type === 'regex' );
 
-			const start = samples.misc.indexOf( '/you' );
-			const end = samples.misc.indexOf( 'cool/' ) + 5;
-			const regex = samples.misc.slice( start, end );
+			var start = samples.misc.indexOf( '/you' );
+			var end = samples.misc.indexOf( 'cool/' ) + 5;
+			var regex = samples.misc.slice( start, end );
 
 			assert.equal( regexes.length, 2 );
 			assert.deepEqual( regexes[0], {
@@ -72,13 +74,13 @@ describe( 'tippex', () => {
 		});
 
 		it( 'finds template strings', () => {
-			const templateStrings = found.filter( chunk => chunk.type.slice( 0, 8 ) === 'template' );
+			var templateStrings = found.filter( chunk => chunk.type.slice( 0, 8 ) === 'template' );
 
 			assert.equal( templateStrings.length, 2 );
 
-			let start = samples.misc.indexOf( '`the' );
-			let end = samples.misc.indexOf( '${' ) + 2;
-			let section = samples.misc.slice( start, end );
+			var start = samples.misc.indexOf( '`the' );
+			var end = samples.misc.indexOf( '${' ) + 2;
+			var section = samples.misc.slice( start, end );
 
 			assert.deepEqual( templateStrings[0], {
 				start,
@@ -102,13 +104,13 @@ describe( 'tippex', () => {
 		});
 
 		it( 'finds normal strings', () => {
-			const strings = found.filter( chunk => chunk.type === 'string' );
+			var strings = found.filter( chunk => chunk.type === 'string' );
 
 			assert.equal( strings.length, 2 );
 
-			let start = samples.misc.indexOf( "'" );
-			let end = samples.misc.indexOf( "';" ) + 1;
-			let string = samples.misc.slice( start, end );
+			var start = samples.misc.indexOf( "'" );
+			var end = samples.misc.indexOf( "';" ) + 1;
+			var string = samples.misc.slice( start, end );
 
 			assert.deepEqual( strings[0], {
 				start,
@@ -133,7 +135,7 @@ describe( 'tippex', () => {
 	});
 
 	describe( 'erase', () => {
-		let erased;
+		var erased;
 
 		before( () => {
 			erased = tippex.erase( samples.misc );
@@ -166,24 +168,24 @@ describe( 'tippex', () => {
 		});
 
 		it( 'handles tricky regex/division cases', () => {
-			const erased = tippex.erase( samples.regexDivisionBefore );
+			var erased = tippex.erase( samples.regexDivisionBefore );
 			assert.equal( erased, samples.regexDivisionAfter );
 		});
 
 		it( 'handles template strings', () => {
-			const erased = tippex.erase( samples.templateStringBefore );
+			var erased = tippex.erase( samples.templateStringBefore );
 			assert.equal( erased, samples.templateStringAfter );
 
-			const erasedTwice = tippex.erase( samples.templateStringAfter );
+			var erasedTwice = tippex.erase( samples.templateStringAfter );
 			assert.equal( erasedTwice, samples.templateStringAfter );
 		});
 	});
 
 	describe( 'match', () => {
 		it( 'matches regular expressions against the original string', () => {
-			const importPattern = /import (\w+) from '([^']+)'/g;
+			var importPattern = /import (\w+) from '([^']+)'/g;
 
-			let results = [];
+			var results = [];
 			tippex.match( samples.imports, importPattern, ( match, name, source ) => {
 				results.push({ match, name, source });
 			});
@@ -203,9 +205,9 @@ describe( 'tippex', () => {
 		});
 
 		it( 'matches regular expressions without the global flag', () => {
-			const importPattern = /import (\w+) from '([^']+)'/;
+			var importPattern = /import (\w+) from '([^']+)'/;
 
-			let results = [];
+			var results = [];
 			tippex.match( samples.imports, importPattern, ( match, name, source ) => {
 				results.push({ match, name, source });
 			});
@@ -222,7 +224,7 @@ describe( 'tippex', () => {
 
 	describe( 'replace', () => {
 		it( 'replaces a pattern', () => {
-			const importPattern = /import (\w+) from '([^']+)'/g;
+			var importPattern = /import (\w+) from '([^']+)'/g;
 
 			var result = tippex.replace( samples.imports, importPattern, ( match, name, source ) => {
 				return `var ${name} = require('${source}')`;
