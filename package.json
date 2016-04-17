@@ -22,6 +22,7 @@
     "lint": "eslint src"
   },
   "devDependencies": {
+    "buble": "^0.5.2",
     "eslint": "^2.8.0",
     "mocha": "^2.4.5",
     "rollup": "^0.25.8",
