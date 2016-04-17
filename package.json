@@ -13,7 +13,7 @@
   "license": "MIT",
   "repository": "https://github.com/Rich-Harris/tippex",
   "scripts": {
-    "test": "mocha --compilers js:babel-register",
+    "test": "mocha --compilers js:buble/register",
     "pretest": "npm run build:umd",
     "build": "npm run build:umd && npm run build:es6",
     "build:umd": "rollup -c -f umd -o dist/tippex.umd.js",

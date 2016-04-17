@@ -1,11 +1,10 @@
-import * as fs from 'fs';
-import { describe, it } from 'mocha';
-import * as assert from 'assert';
-import sms from 'source-map-support';
+const fs = require( 'fs' );
+const assert = require( 'assert' );
+const { describe, it } = require( 'mocha' );
 
-import * as tippex from '../';
+require( 'source-map-support' ).install();
 
-sms.install();
+const tippex = require( '../' );
 
 let samples = {};
 fs.readdirSync( 'test/samples' ).forEach( file => {
