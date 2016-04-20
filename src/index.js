@@ -147,7 +147,7 @@ export function find ( str ) {
 			return base;
 		}
 
-		return blockComment;
+		return blockComment( char );
 	}
 
 	for ( let i = 0; i < str.length; i += 1 ) {

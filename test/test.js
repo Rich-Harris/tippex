@@ -164,6 +164,11 @@ describe( 'tippex', () => {
 			assert.equal( erased.indexOf( 'escaped' ), -1 );
 		});
 
+		it( 'handles classes', () => {
+			const erased = tippex.erase( '/* double trailing asterisks **/' );
+			assert.equal( erased, '                                ' );
+		});
+
 		it( 'handles tricky regex/division cases', () => {
 			const erased = tippex.erase( samples.regexDivisionBefore );
 			assert.equal( erased, samples.regexDivisionAfter );
