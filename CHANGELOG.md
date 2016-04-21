@@ -1,5 +1,9 @@
 # Tippex changelog
 
+## 2.1.2
+
+* Fix crash on double asterisk in closing block comment ([#10](https://github.com/Rich-Harris/tippex/pull/10))
+
 ## 2.1.1
 
 * Handle `$` in template literals ([#1](https://github.com/Rich-Harris/tippex/issues/1))
