@@ -164,7 +164,7 @@ describe( 'tippex', () => {
 			assert.equal( erased.indexOf( 'escaped' ), -1 );
 		});
 
-		it( 'handles classes', () => {
+		it( 'handles double trailing asterisks in block comments', () => {
 			const erased = tippex.erase( '/* double trailing asterisks **/' );
 			assert.equal( erased, '                                ' );
 		});
