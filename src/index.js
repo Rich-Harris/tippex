@@ -1,6 +1,6 @@
 import getLocation from './getLocation.js';
 
-const keywords = /(case|delete|do|else|in|instanceof|new|return|throw|typeof|void)\s*$/;
+const keywords = /(case|default|delete|do|else|in|instanceof|new|return|throw|typeof|void)\s*$/;
 const punctuators = /(^|\{|\(|\[\.|;|,|<|>|<=|>=|==|!=|===|!==|\+|-|\*\%|<<|>>|>>>|&|\||\^|!|~|&&|\|\||\?|:|=|\+=|-=|\*=|%=|<<=|>>=|>>>=|&=|\|=|\^=|\/=|\/)\s*$/;
 const ambiguous = /(\}|\)|\+\+|--)\s*$/;
 

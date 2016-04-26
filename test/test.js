@@ -181,6 +181,11 @@ describe( 'tippex', () => {
 			const erasedTwice = tippex.erase( samples.templateStringAfter );
 			assert.equal( erasedTwice, samples.templateStringAfter );
 		});
+
+		it( 'handles curlies inside a regex following export default (#1)', () => {
+			const erased = tippex.erase( 'export default /^}{/' );
+			assert.equal( erased, 'export default /   /' );
+		});
 	});
 
 	describe( 'match', () => {
