@@ -1,5 +1,10 @@
 # Tippex changelog
 
+## 2.2.0
+
+* Include `default` among keywords that signal `/` should be treated as start of regex literal ([#1](https://github.com/Rich-Harris/tippex/issues/1))
+* More informative error message than 'state is not a function'
+
 ## 2.1.2
 
 * Fix crash on double asterisk in closing block comment ([#10](https://github.com/Rich-Harris/tippex/pull/10))
