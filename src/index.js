@@ -1,3 +1,5 @@
+import getLocation from './getLocation.js';
+
 const keywords = /(case|delete|do|else|in|instanceof|new|return|throw|typeof|void)\s*$/;
 const punctuators = /(^|\{|\(|\[\.|;|,|<|>|<=|>=|==|!=|===|!==|\+|-|\*\%|<<|>>|>>>|&|\||\^|!|~|&&|\|\||\?|:|=|\+=|-=|\*=|%=|<<=|>>=|>>>=|&=|\|=|\^=|\/=|\/)\s*$/;
 const ambiguous = /(\}|\)|\+\+|--)\s*$/;
@@ -151,6 +153,18 @@ export function find ( str ) {
 	}
 
 	for ( let i = 0; i < str.length; i += 1 ) {
+		if ( !state ) {
+			const { line, column } = getLocation( str, i );
+			const before = str.slice( 0, i );
+			const beforeLine = /(^|\n).+$/.exec( before )[0];
+			const after = str.slice( i );
+			const afterLine = /.+(\n|$)/.exec( after )[0];
+
+			const snippet = `${beforeLine}${afterLine}\n${ Array( beforeLine.length + 1 ).join( ' ' )}^`;
+
+			throw new Error( `Unexpected character (${line}:${column}). If this is valid JavaScript, it's probably a bug in tippex. Please raise an issue at https://github.com/Rich-Harris/tippex/issues – thanks!\n\n${snippet}` );
+		}
+
 		state = state( str[i], i );
 	}
 
