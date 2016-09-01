@@ -57,7 +57,7 @@ Once that's done, you can search for patterns (such as `var` or ` = `) in comple
 npm install --save tippex
 ```
 
-...or download from npmcdn.com ([UMD version](https://npmcdn.com/tippex), [ES6 exports version](https://npmcdn.com/tippex/dist/tippex.es6.js)).
+...or download from unpkg.com ([UMD version](https://unpkg.com/tippex), [ES6 exports version](https://unpkg.com/tippex/dist/tippex.es6.js)).
 
 
 ## Usage
