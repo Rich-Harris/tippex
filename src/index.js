@@ -3,12 +3,14 @@ import getLocation from './getLocation.js';
 const keywords = /(case|default|delete|do|else|in|instanceof|new|return|throw|typeof|void)\s*$/;
 const punctuators = /(^|\{|\(|\[\.|;|,|<|>|<=|>=|==|!=|===|!==|\+|-|\*\%|<<|>>|>>>|&|\||\^|!|~|&&|\|\||\?|:|=|\+=|-=|\*=|%=|<<=|>>=|>>>=|&=|\|=|\^=|\/=|\/)\s*$/;
 const ambiguous = /(\}|\)|\+\+|--)\s*$/;
+const beforeJsx = /^$|[=:;,\(\{\}\[|&+]\s*$/;
 
 export function find ( str ) {
 	let quote;
 	let escapedFrom;
 	let regexEnabled = true;
 	let pfixOp = false;
+	let jsxTagDepth = 0;
 	let stack = [];
 
 	let start;
@@ -27,7 +29,7 @@ export function find ( str ) {
 			return start = i, slash;
 		}
 
-		if ( char === '"' || char === "'" ) return start = i, quote = char, string;
+		if ( char === '"' || char === "'" ) return start = i, quote = char, stack.push( base ), string;
 		if ( char === '`' ) return start = i, templateString;
 
 		if ( char === '{' ) return stack.push( base ), base;
@@ -35,6 +37,12 @@ export function find ( str ) {
 
 		if ( !( pfixOp && /\W/.test( char ) ) ) {
 			pfixOp = ( char === '+' && str[ i - 1 ] === '+' ) || ( char === '-' && str[ i - 1 ] === '-' );
+		}
+
+		if ( char === '<' ) {
+			let substr = str.substr( 0, i );
+			substr = _erase( substr, found ).trim();
+			if ( beforeJsx.test( substr ) ) return stack.push( base ), jsxTagStart;
 		}
 
 		return base;
@@ -79,7 +87,7 @@ export function find ( str ) {
 
 			found.push({ start, end, inner, outer, type: 'string' });
 
-			return base;
+			return stack.pop();
 		}
 
 		return string;
@@ -118,6 +126,43 @@ export function find ( str ) {
 			return base;
 		}
 		return templateString( char, i );
+	}
+
+	// JSX is an XML-like extension to ECMAScript
+	// https://facebook.github.io/jsx/
+
+	function jsxTagStart ( char ) {
+		if ( char === '/' ) return jsxTagDepth--, jsxTag;
+		return jsxTagDepth++, jsxTag;
+	}
+
+	function jsxTag ( char, i ) {
+		if ( char === '"' || char === "'" ) return start = i, quote = char, stack.push( jsxTag ), string;
+		if ( char === '{' ) return stack.push( jsxTag ), base;
+		if ( char === '>' ) {
+			if ( jsxTagDepth <= 0 ) return base;
+			return jsx;
+		}
+		if ( char === '/' ) return jsxTagSelfClosing;
+
+		return jsxTag;
+	}
+
+	function jsxTagSelfClosing ( char ) {
+		if ( char === '>' ) {
+			jsxTagDepth--;
+			if ( jsxTagDepth <= 0 ) return base;
+			return jsx;
+		}
+
+		return jsxTag;
+	}
+
+	function jsx ( char ) {
+		if ( char === '{' ) return stack.push( jsx ), base;
+		if ( char === '<' ) return jsxTagStart;
+
+		return jsx;
 	}
 
 	function lineComment ( char, end ) {

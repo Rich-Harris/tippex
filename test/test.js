@@ -8,7 +8,7 @@ const tippex = require( '../' );
 
 let samples = {};
 fs.readdirSync( 'test/samples' ).forEach( file => {
-	samples[ file.replace( '.js', '' ) ] = fs.readFileSync( `test/samples/${file}`, 'utf-8' );
+	samples[ file.replace( /\.jsx?$/, '' ) ] = fs.readFileSync( `test/samples/${file}`, 'utf-8' );
 });
 
 describe( 'tippex', () => {
@@ -144,6 +144,11 @@ describe( 'tippex', () => {
 
 		it( 'erases line comments w/ parens #8', () => {
 			assert.equal( tippex.erase('//)\n//\n'), '   \n  \n' );
+		});
+
+		it( "handles jsx syntax", () => {
+			const erased = tippex.erase( samples.jsxBefore );
+			assert.equal( erased, samples.jsxAfter );
 		});
 
 		it( 'erases block comments', () => {
