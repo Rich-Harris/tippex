@@ -1,5 +1,9 @@
 # Tippex changelog
 
+## 2.3.0
+
+* JSX support ([#14](https://github.com/Rich-Harris/tippex/pull/14))
+
 ## 2.2.0
 
 * Include `default` among keywords that signal `/` should be treated as start of regex literal ([#1](https://github.com/Rich-Harris/tippex/issues/1))

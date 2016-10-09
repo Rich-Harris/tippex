@@ -1,7 +1,7 @@
 {
   "name": "tippex",
   "description": "Find and erase strings and comments in JavaScript code",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "author": "Rich Harris",
   "main": "dist/tippex.umd.js",
   "jsnext:main": "dist/tippex.es6.js",
