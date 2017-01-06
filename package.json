@@ -17,7 +17,7 @@
     "test": "mocha",
     "pretest": "npm run build",
     "build": "rollup -c",
-    "prepublish": "npm run lint && rm -rf dist && npm test && npm run build:es6",
+    "prepublish": "npm run lint && rm -rf dist && npm test",
     "lint": "eslint src"
   },
   "devDependencies": {
