@@ -52,6 +52,7 @@ export function find ( str ) {
 		if ( char === '/' ) return lineComment;
 		if ( char === '*' ) return blockComment;
 		if ( char === '[' ) return regexEnabled ? regexCharacter : base;
+		if ( char === '\\' ) return escapedFrom = regex, escaped;
 		return regexEnabled && !pfixOp ? regex : base;
 	}
 
