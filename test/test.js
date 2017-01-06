@@ -179,6 +179,11 @@ describe( 'tippex', () => {
 			assert.equal( erased, samples.regexDivisionAfter );
 		});
 
+		it( 'handles regex with escaped slash', () => {
+			const erased = tippex.erase( samples.regexEscapedSlashBefore );
+			assert.equal( erased, samples.regexEscapedSlashAfter );
+		});
+
 		it( 'handles template strings', () => {
 			const erased = tippex.erase( samples.templateStringBefore );
 			assert.equal( erased, samples.templateStringAfter );
