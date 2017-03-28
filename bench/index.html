@@ -1,0 +1,10 @@
+<script src='../dist/tippex.umd.js'></script>
+<script>
+	fetch( 'fixture/rollup.es.js' ).then( r => r.text() ).then( source => {
+		console.profile( 'tippex.find' );
+		const found = tippex.find( source );
+		console.profileEnd( 'tippex.find' );
+
+		console.log( `found`, found )
+	});
+</script>
