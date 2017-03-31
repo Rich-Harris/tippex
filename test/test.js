@@ -3,6 +3,7 @@ const assert = require( 'assert' );
 const { describe, it } = require( 'mocha' );
 
 require( 'source-map-support' ).install();
+require( 'console-group' ).install();
 
 const tippex = require( '../' );
 
@@ -22,15 +23,14 @@ describe( 'tippex', () => {
 		it( 'finds line comments', () => {
 			const lines = found.filter( chunk => chunk.type === 'line' );
 
-			const start = samples.misc.indexOf( '//' );
+			const start = samples.misc.indexOf( '//' ) + 2;
 			const end = samples.misc.indexOf( '\n', start );
 
 			assert.equal( lines.length, 1 );
 			assert.deepEqual( lines[0], {
 				start,
 				end,
-				inner: ' line comment',
-				outer: '// line comment',
+				value: ' line comment',
 				type: 'line'
 			});
 		});
@@ -38,8 +38,8 @@ describe( 'tippex', () => {
 		it( 'finds block comments', () => {
 			const blocks = found.filter( chunk => chunk.type === 'block' );
 
-			const start = samples.misc.indexOf( '/*' );
-			const end = samples.misc.indexOf( '*/' ) + 2;
+			const start = samples.misc.indexOf( '/*' ) + 2;
+			const end = samples.misc.indexOf( '*/' );
 
 			const comment = samples.misc.slice( start, end );
 
@@ -47,8 +47,7 @@ describe( 'tippex', () => {
 			assert.deepEqual( blocks[0], {
 				start,
 				end,
-				inner: comment.slice( 2, -2 ),
-				outer: comment,
+				value: comment,
 				type: 'block'
 			});
 		});
@@ -56,16 +55,15 @@ describe( 'tippex', () => {
 		it( 'finds regular expressions', () => {
 			const regexes = found.filter( chunk => chunk.type === 'regex' );
 
-			const start = samples.misc.indexOf( '/you' );
-			const end = samples.misc.indexOf( 'cool/' ) + 5;
+			const start = samples.misc.indexOf( '/you' ) + 1;
+			const end = samples.misc.indexOf( 'cool/' ) + 4;
 			const regex = samples.misc.slice( start, end );
 
 			assert.equal( regexes.length, 2 );
 			assert.deepEqual( regexes[0], {
 				start,
 				end,
-				inner: regex.slice( 1, -1 ),
-				outer: regex,
+				value: regex,
 				type: 'regex'
 			});
 		});
@@ -75,27 +73,25 @@ describe( 'tippex', () => {
 
 			assert.equal( templateStrings.length, 2 );
 
-			let start = samples.misc.indexOf( '`the' );
-			let end = samples.misc.indexOf( '${' ) + 2;
+			let start = samples.misc.indexOf( '`the' ) + 1;
+			let end = samples.misc.indexOf( '${' );
 			let section = samples.misc.slice( start, end );
 
 			assert.deepEqual( templateStrings[0], {
 				start,
 				end,
-				inner: section.slice( 1, -2 ),
-				outer: section,
+				value: section,
 				type: 'templateChunk'
 			});
 
-			start = samples.misc.indexOf( '}.' );
-			end = samples.misc.indexOf( '\\``' ) + 3;
+			start = samples.misc.indexOf( '}.' ) + 1;
+			end = samples.misc.indexOf( '\\``' ) + 2;
 			section = samples.misc.slice( start, end );
 
 			assert.deepEqual( templateStrings[1], {
 				start,
 				end,
-				inner: section.slice( 1, -1 ),
-				outer: section,
+				value: section,
 				type: 'templateEnd'
 			});
 		});
@@ -105,27 +101,25 @@ describe( 'tippex', () => {
 
 			assert.equal( strings.length, 2 );
 
-			let start = samples.misc.indexOf( "'" );
-			let end = samples.misc.indexOf( "';" ) + 1;
+			let start = samples.misc.indexOf( "'" ) + 1;
+			let end = samples.misc.indexOf( "';" );
 			let string = samples.misc.slice( start, end );
 
 			assert.deepEqual( strings[0], {
 				start,
 				end,
-				inner: string.slice( 1, -1 ),
-				outer: string,
+				value: string,
 				type: 'string'
 			});
 
-			start = samples.misc.indexOf( '"' );
-			end = samples.misc.indexOf( '";' ) + 1;
+			start = samples.misc.indexOf( '"' ) + 1;
+			end = samples.misc.indexOf( '";' );
 			string = samples.misc.slice( start, end );
 
 			assert.deepEqual( strings[1], {
 				start,
 				end,
-				inner: string.slice( 1, -1 ),
-				outer: string,
+				value: string,
 				type: 'string'
 			});
 		});
@@ -138,40 +132,98 @@ describe( 'tippex', () => {
 			erased = tippex.erase( samples.misc );
 		});
 
-		it( 'erases line comments', () => {
-			assert.equal( erased.indexOf( 'line comment' ), -1 );
-		});
+		const tests = {
+			'erases a line comment': [
+				`const answer = 42; // line comment`,
+				`const answer = 42; //             `
+			],
 
-		it( 'erases line comments w/ parens #8', () => {
-			assert.equal( tippex.erase('//)\n//\n'), '   \n  \n' );
-		});
+			'erases a line comment at the start of a line': [
+				`// line comment`,
+				`//             `
+			],
 
-		it( "handles jsx syntax", () => {
-			const erased = tippex.erase( samples.jsxBefore );
-			assert.equal( erased, samples.jsxAfter );
-		});
+			'erases a line comment with parens (#8)': [
+				`//)\n//\n`,
+				`// \n//\n`
+			],
 
-		it( 'erases block comments', () => {
-			assert.equal( erased.indexOf( 'Multi' ), -1 );
-		});
+			'removes jsx contents': [
+				'<div>this should disappear</div>',
+				'<div>                     </div>'
+			],
 
-		it( 'erases regular expressions', () => {
-			assert.equal( erased.indexOf( 'ignore' ), -1 );
-		});
+			'removes jsx attributes': [
+				'<div x="y"></div>',
+				'<div x=" "></div>'
+			],
 
-		it( 'erases template strings', () => {
-			assert.equal( erased.indexOf( 'answer is' ), -1 );
-			assert.equal( erased.indexOf( 'backtick' ), -1 );
-		});
+			'handles simple jsx syntax': [
+				`/**/<a>/**/{/**/}</a>/**/;`,
+				`/**/<a>    {/**/}</a>/**/;`
+			],
 
-		it( 'erases normal strings', () => {
-			assert.equal( erased.indexOf( 'trying to escape' ), -1 );
-			assert.equal( erased.indexOf( 'escaped' ), -1 );
-		});
+			'erases block comments': [
+				`/*foo*/`,
+				`/*   */`
+			],
 
-		it( 'handles double trailing asterisks in block comments', () => {
-			const erased = tippex.erase( '/* double trailing asterisks **/' );
-			assert.equal( erased, '                                ' );
+			'erases regular expressions': [
+				`const regex = /you can ignore\\/[/]skip me, it's cool/;`,
+				`const regex = /                                     /;`
+			],
+
+			'erases template strings': [
+				"const templateString = `the answer is ${answer}. This is a backtick: \\``;",
+				"const templateString = `              ${answer}                        `;"
+			],
+
+			'erases normal strings': [
+				`const singleQuotedString = 'i\\'m trying to escape';`,
+				`const singleQuotedString = '                     ';`
+			],
+
+			'handles double trailing asterisks in block comments': [
+				'/* double trailing asterisks **/',
+				'/*                            */'
+			],
+
+			'handles comments before division': [
+				'1 /**/ / 2',
+				'1 /**/ / 2'
+			],
+
+			'handles comments before regex': [
+				`foo = 'bar'; /**/ /bar/.test(foo)`,
+				`foo = '   '; /**/ /   /.test(foo)`
+			],
+
+			'removes dollar inside template string': [
+				'const a = `$`;',
+				'const a = ` `;'
+			],
+
+			'removes escaped dollar inside template string': [
+				'const a = `\\$`;',
+				'const a = `  `;'
+			],
+
+			'removes things that look like template expressions': [
+				'const c = `$ {}${ `${ `$` }` }`;',
+				'const c = `    ${ `${ ` ` }` }`;'
+			],
+
+			'handles curlies inside a regex following export default (#1)': [
+				'export default /^}{/',
+				'export default /   /'
+			]
+		};
+
+		Object.keys( tests ).forEach( key => {
+			it( key, () => {
+				const [ before, after ] = tests[ key ];
+				assert.equal( tippex.erase( before ), after );
+			});
 		});
 
 		it( 'handles tricky regex/division cases', () => {
@@ -179,17 +231,15 @@ describe( 'tippex', () => {
 			assert.equal( erased, samples.regexDivisionAfter );
 		});
 
-		it( 'handles template strings', () => {
-			const erased = tippex.erase( samples.templateStringBefore );
-			assert.equal( erased, samples.templateStringAfter );
-
-			const erasedTwice = tippex.erase( samples.templateStringAfter );
-			assert.equal( erasedTwice, samples.templateStringAfter );
+		it( "handles jsx syntax", () => {
+			console.group( `jsx` )
+			const erased = tippex.erase( samples.jsxBefore );
+			console.groupEnd()
+			assert.equal( erased, samples.jsxAfter );
 		});
 
-		it( 'handles curlies inside a regex following export default (#1)', () => {
-			const erased = tippex.erase( 'export default /^}{/' );
-			assert.equal( erased, 'export default /   /' );
+		it( 'erases block comments', () => {
+			assert.equal( erased.indexOf( 'Multi' ), -1 );
 		});
 	});
 
