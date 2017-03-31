@@ -5,6 +5,10 @@ const punctuators = /(^|\{|\(|\[\.|;|,|<|>|<=|>=|==|!=|===|!==|\+|-|\*\%|<<|>>|>
 const ambiguous = /(\}|\)|\+\+|--)\s*$/;
 const beforeJsx = /^$|[=:;,\(\{\}\[|&+]\s*$/;
 
+const punctuatorChars = /[{}()[.;,<>=+\-*%&|\^!~?:/]/;
+const keywordChars = /[a-z]/;
+const beforeJsxChars = /[=:;,({}[&+]/;
+
 export function find ( str ) {
 	let quote;
 	let escapedFrom;
@@ -19,21 +23,57 @@ export function find ( str ) {
 
 	function base ( char, i ) {
 		if ( char === '/' ) {
+
 			// could be start of regex literal OR division punctuator. Solution via
 			// http://stackoverflow.com/questions/5519596/when-parsing-javascript-what-determines-the-meaning-of-a-slash/27120110#27120110
-			const substr = str.substr( 0, i );
-			if ( keywords.test( substr ) || punctuators.test( substr ) ) regexEnabled = true;
-			else if ( ambiguous.test( substr ) && !tokenClosesExpression( substr, found ) ) regexEnabled = true; // TODO save this determination for when it's necessary?
-			else regexEnabled = false;
+
+			let previousTokenEnd = i;
+			while ( previousTokenEnd > 0 && /\s/.test( str[ previousTokenEnd - 1 ] ) ) {
+				previousTokenEnd -= 1;
+			}
+
+			let previousTokenStart = previousTokenEnd;
+
+			if ( previousTokenEnd > 0 ) {
+				if ( punctuatorChars.test( str[ previousTokenStart - 1 ] ) ) {
+					while ( punctuatorChars.test( str[ previousTokenStart - 1 ] ) ) {
+						previousTokenStart -= 1;
+					}
+				} else {
+					while ( keywordChars.test( str[ previousTokenStart - 1 ] ) ) {
+						previousTokenStart -= 1;
+					}
+				}
+
+				const previousToken = str.slice( previousTokenStart, previousTokenEnd );
+
+				if ( previousTokenStart !== previousTokenEnd ) {
+					if ( keywords.test( previousToken ) || punctuators.test( previousToken ) ) {
+						regexEnabled = true;
+					} else if ( ambiguous.test( previousToken ) && !tokenClosesExpression( str.substr( 0, i ), found ) ) {
+						regexEnabled = true; // TODO save this determination for when it's necessary?
+					} else {
+						regexEnabled = false;
+					}
+				} else {
+					regexEnabled = false;
+				}
+			}
+
+			else {
+				regexEnabled = true;
+			}
 
 			return start = i, slash;
 		}
 
 		if ( char === '"' || char === "'" ) return start = i, quote = char, stack.push( base ), string;
-		if ( char === '`' ) return start = i, templateString;
+		if ( char === '`' ) return start = i + 1, templateString;
 
 		if ( char === '{' ) return stack.push( base ), base;
-		if ( char === '}' ) return start = i, stack.pop();
+		if ( char === '}' ) {
+			return start = i + 1, stack.pop();
+		}
 
 		if ( !( pfixOp && /\W/.test( char ) ) ) {
 			pfixOp = ( char === '+' && str[ i - 1 ] === '+' ) || ( char === '-' && str[ i - 1 ] === '-' );
@@ -42,17 +82,30 @@ export function find ( str ) {
 		if ( char === '<' ) {
 			let substr = str.substr( 0, i );
 			substr = _erase( substr, found ).trim();
-			if ( beforeJsx.test( substr ) ) return stack.push( base ), jsxTagStart;
+			if ( beforeJsx.test( substr ) ) {
+				stack.push( base );
+				return jsxTagStart;
+			}
+
+			// console.log( i );
+			// let c = i;
+			// while ( c > 0 && /\s/.test( str[ c - 1 ] ) ) c -= 1;
+
+			// console.log( `c, str[c - 1]`, c, str[c - 1] )
+
+			// if ( c === 0 || beforeJsxChars.test( str[ c - 1 ] ) ) {
+			// 	return stack.push( base ), jsxTagStart;
+			// }
 		}
 
 		return base;
 	}
 
-	function slash ( char ) {
-		if ( char === '/' ) return lineComment;
-		if ( char === '*' ) return blockComment;
-		if ( char === '[' ) return regexEnabled ? regexCharacter : base;
-		return regexEnabled && !pfixOp ? regex : base;
+	function slash ( char, i ) {
+		if ( char === '/' ) return start = i + 1, lineComment;
+		if ( char === '*' ) return start = i + 1, blockComment;
+		if ( char === '[' ) return regexEnabled ? ( start = i, regexCharacter ) : base;
+		return regexEnabled && !pfixOp ? ( start = i, regex ) : base;
 	}
 
 	function regex ( char, i ) {
@@ -60,11 +113,10 @@ export function find ( str ) {
 		if ( char === '\\' ) return escapedFrom = regex, escaped;
 
 		if ( char === '/' ) {
-			const end = i + 1;
-			const outer = str.slice( start, end );
-			const inner = outer.slice( 1, -1 );
+			const end = i;
+			const value = str.slice( start, end );
 
-			found.push({ start, end, inner, outer, type: 'regex' });
+			found.push({ start, end, value, type: 'regex' });
 
 			return base;
 		}
@@ -81,11 +133,10 @@ export function find ( str ) {
 	function string ( char, i ) {
 		if ( char === '\\' ) return escapedFrom = string, escaped;
 		if ( char === quote ) {
-			const end = i + 1;
-			const outer = str.slice( start, end );
-			const inner = outer.slice( 1, -1 );
+			const end = i;
+			const value = str.slice( start + 1, end );
 
-			found.push({ start, end, inner, outer, type: 'string' });
+			found.push({ start: start + 1, end, value, type: 'string' });
 
 			return stack.pop();
 		}
@@ -102,11 +153,10 @@ export function find ( str ) {
 		if ( char === '\\' ) return escapedFrom = templateString, escaped;
 
 		if ( char === '`' ) {
-			const end = i + 1;
-			const outer = str.slice( start, end );
-			const inner = outer.slice( 1, -1 );
+			const end = i;
+			const value = str.slice( start, end );
 
-			found.push({ start, end, inner, outer, type: 'templateEnd' });
+			found.push({ start, end, value, type: 'templateEnd' });
 
 			return base;
 		}
@@ -116,11 +166,10 @@ export function find ( str ) {
 
 	function templateStringDollar ( char, i ) {
 		if ( char === '{' ) {
-			const end = i + 1;
-			const outer = str.slice( start, end );
-			const inner = outer.slice( 1, -2 );
+			const end = i - 1;
+			const value = str.slice( start, end );
 
-			found.push({ start, end, inner, outer, type: 'templateChunk' });
+			found.push({ start, end, value, type: 'templateChunk' });
 
 			stack.push( templateString );
 			return base;
@@ -141,6 +190,7 @@ export function find ( str ) {
 		if ( char === '{' ) return stack.push( jsxTag ), base;
 		if ( char === '>' ) {
 			if ( jsxTagDepth <= 0 ) return base;
+			start = i + 1;
 			return jsx;
 		}
 		if ( char === '/' ) return jsxTagSelfClosing;
@@ -158,19 +208,28 @@ export function find ( str ) {
 		return jsxTag;
 	}
 
-	function jsx ( char ) {
-		if ( char === '{' ) return stack.push( jsx ), base;
-		if ( char === '<' ) return jsxTagStart;
+	function jsx ( char, end ) {
+		if ( char === '{' || char === '<' ) {
+			const value = str.slice( start, end );
+			found.push({ start, end, value, type: 'jsx' });
+
+			if ( char === '{' ) {
+				return stack.push( jsx ), base;
+			}
+
+			if ( char === '<' ) {
+				return jsxTagStart;
+			}
+		}
 
 		return jsx;
 	}
 
 	function lineComment ( char, end ) {
 		if ( char === '\n' ) {
-			const outer = str.slice( start, end );
-			const inner = outer.slice( 2 );
+			const value = str.slice( start, end );
 
-			found.push({ start, end, inner, outer, type: 'line' });
+			found.push({ start, end, value, type: 'line' });
 
 			return base;
 		}
@@ -185,11 +244,10 @@ export function find ( str ) {
 
 	function blockCommentEnding ( char, i ) {
 		if ( char === '/' ) {
-			const end = i + 1;
-			const outer = str.slice( start, end );
-			const inner = outer.slice( 2, -2 );
+			const end = i - 1;
+			const value = str.slice( start, end );
 
-			found.push({ start, end, inner, outer, type: 'block' });
+			found.push({ start, end, value, type: 'block' });
 
 			return base;
 		}
@@ -212,6 +270,9 @@ export function find ( str ) {
 
 		state = state( str[i], i );
 	}
+
+	// cheeky hack
+	if ( state.name === 'lineComment' ) state( '\n', str.length );
 
 	return found;
 }
@@ -255,12 +316,13 @@ function spaces ( count ) {
 }
 
 const erasers = {
-	string: chunk => chunk.outer[0] + spaces( chunk.inner.length ) + chunk.outer[0],
-	line: chunk => spaces( chunk.outer.length ),
-	block: chunk => chunk.outer.split( '\n' ).map( line => spaces( line.length ) ).join( '\n' ),
-	regex: chunk => '/' + spaces( chunk.inner.length ) + '/',
-	templateChunk: chunk => chunk.outer[0] + spaces( chunk.inner.length ) + '${',
-	templateEnd: chunk => chunk.outer[0] + spaces( chunk.inner.length ) + '`'
+	string: chunk => spaces( chunk.value.length ),
+	line: chunk => spaces( chunk.value.length ),
+	block: chunk => chunk.value.split( '\n' ).map( line => spaces( line.length ) ).join( '\n' ),
+	regex: chunk => spaces( chunk.value.length ),
+	templateChunk: chunk => spaces( chunk.value.length ),
+	templateEnd: chunk => spaces( chunk.value.length ),
+	jsx: chunk => spaces( chunk.value.length )
 };
 
 export function erase ( str ) {
