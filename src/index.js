@@ -46,16 +46,16 @@ export function find ( str ) {
 	let found = [];
 	let state = base;
 
-	let lastSignificantChar = null;
-	let lastSignificantCharIndex = -1;
+	let lsci = -1; // last significant character index
+	const lsc = () => str[ lsci ];
 
 	const parenMatches = {};
 	const openingParenPositions = {};
 	let parenDepth = 0;
 
 	function tokenClosesExpression () {
-		if ( lastSignificantChar === ')' ) {
-			let c = parenMatches[ lastSignificantCharIndex ];
+		if ( lsc() === ')' ) {
+			let c = parenMatches[ lsci ];
 			while ( isWhitespace( str[ c - 1 ] ) ) c -= 1;
 
 			// if parenthesized expression is immediately preceded by `if`/`while`, it's not closing an expression
@@ -67,8 +67,37 @@ export function find ( str ) {
 	}
 
 	function base ( char, i ) {
-		if ( char === '/' ) {
+		if ( char === '(' ) {
+			lsci = i;
+			openingParenPositions[ parenDepth++ ] = i;
+			return base;
+		}
 
+		if ( char === ')' ) {
+			lsci = i;
+			parenMatches[i] = openingParenPositions[ --parenDepth ];
+			return base;
+		}
+
+		if ( char === '{' ) {
+			lsci = i;
+			stack.push( base );
+			return base;
+		}
+
+		if ( char === '}' ) {
+			lsci = i;
+			return start = i + 1, stack.pop();
+		}
+
+		if ( char === '"' || char === "'" ) {
+			start = i;
+			quote = char;
+			stack.push( base );
+			return string;
+		}
+
+		if ( char === '/' ) {
 			// could be start of regex literal OR division punctuator. Solution via
 			// http://stackoverflow.com/questions/5519596/when-parsing-javascript-what-determines-the-meaning-of-a-slash/27120110#27120110
 
@@ -112,40 +141,19 @@ export function find ( str ) {
 			return start = i, slash;
 		}
 
-		if ( char === '"' || char === "'" ) return start = i, quote = char, stack.push( base ), string;
 		if ( char === '`' ) return start = i + 1, templateString;
-
-		if ( char === '{' ) {
-			lastSignificantChar = char;
-			lastSignificantCharIndex = i;
-			stack.push( base );
-			return base;
-		}
-
-		if ( char === '}' ) {
-			return start = i + 1, stack.pop();
-		}
-
-		if ( char === '(' ) {
-			openingParenPositions[ parenDepth++ ] = i;
-		}
-
-		if ( char === ')' ) {
-			parenMatches[i] = openingParenPositions[ --parenDepth ];
-		}
 
 		if ( !pfixOp ) {
 			pfixOp = ( char === '+' && str[ i - 1 ] === '+' ) || ( char === '-' && str[ i - 1 ] === '-' );
 		}
 
-		if ( char === '<' && ( !lastSignificantChar || beforeJsxChars.test( lastSignificantChar ) ) ) {
+		if ( char === '<' && ( !~lsci || beforeJsxChars.test( lsc() ) ) ) {
 			stack.push( base );
 			return jsxTagStart;
 		}
 
 		if ( !isWhitespace( char ) ) {
-			lastSignificantChar = char;
-			lastSignificantCharIndex = i;
+			lsci = i;
 		}
 		return base;
 	}
