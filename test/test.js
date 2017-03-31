@@ -126,12 +126,6 @@ describe( 'tippex', () => {
 	});
 
 	describe( 'erase', () => {
-		let erased;
-
-		before( () => {
-			erased = tippex.erase( samples.misc );
-		});
-
 		const tests = {
 			'erases a line comment': [
 				`const answer = 42; // line comment`,
@@ -220,7 +214,7 @@ describe( 'tippex', () => {
 		};
 
 		Object.keys( tests ).forEach( key => {
-			it( key, () => {
+			( key[0] === '-' ? it.only : it )( key, () => {
 				const [ before, after ] = tests[ key ];
 				assert.equal( tippex.erase( before ), after );
 			});
@@ -232,13 +226,12 @@ describe( 'tippex', () => {
 		});
 
 		it( "handles jsx syntax", () => {
-			console.group( `jsx` )
 			const erased = tippex.erase( samples.jsxBefore );
-			console.groupEnd()
 			assert.equal( erased, samples.jsxAfter );
 		});
 
 		it( 'erases block comments', () => {
+			const erased = tippex.erase( samples.misc );
 			assert.equal( erased.indexOf( 'Multi' ), -1 );
 		});
 	});
