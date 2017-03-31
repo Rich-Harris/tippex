@@ -3,11 +3,13 @@ import getLocation from './getLocation.js';
 const keywords = /(case|default|delete|do|else|in|instanceof|new|return|throw|typeof|void)\s*$/;
 const punctuators = /(^|\{|\(|\[\.|;|,|<|>|<=|>=|==|!=|===|!==|\+|-|\*\%|<<|>>|>>>|&|\||\^|!|~|&&|\|\||\?|:|=|\+=|-=|\*=|%=|<<=|>>=|>>>=|&=|\|=|\^=|\/=|\/)\s*$/;
 const ambiguous = /(\}|\)|\+\+|--)\s*$/;
-const beforeJsx = /^$|[=:;,\(\{\}\[|&+]\s*$/;
 
 const punctuatorChars = /[{}()[.;,<>=+\-*%&|\^!~?:/]/;
 const keywordChars = /[a-z]/;
 const beforeJsxChars = /[=:;,({}[&+]/;
+
+const whitespace = /\s/;
+const nonWhitespace = /\S/;
 
 export function find ( str ) {
 	let quote;
@@ -23,6 +25,23 @@ export function find ( str ) {
 
 	let lastSignificantChar = null;
 	let lastSignificantCharIndex = -1;
+
+	const parenMatches = {};
+	const openingParenPositions = {};
+	let parenDepth = 0;
+
+	function tokenClosesExpression () {
+		if ( lastSignificantChar === ')' ) {
+			let c = parenMatches[ lastSignificantCharIndex ];
+			while ( whitespace.test( str[ c - 1 ] ) ) c -= 1;
+
+			// if parenthesized expression is immediately preceded by `if`/`while`, it's not closing an expression
+			if ( /(if|while)$/.test( str.slice( c - 5, c ) ) ) return false;
+		}
+
+		// TODO handle }, ++ and -- tokens immediately followed by / character
+		return true;
+	}
 
 	function base ( char, i ) {
 		if ( char === '/' ) {
@@ -75,6 +94,7 @@ export function find ( str ) {
 
 		if ( char === '{' ) {
 			lastSignificantChar = char;
+			lastSignificantCharIndex = i;
 			stack.push( base );
 			return base;
 		}
@@ -83,16 +103,27 @@ export function find ( str ) {
 			return start = i + 1, stack.pop();
 		}
 
+		if ( char === '(' ) {
+			openingParenPositions[ parenDepth++ ] = i;
+		}
+
+		if ( char === ')' ) {
+			parenMatches[i] = openingParenPositions[ --parenDepth ];
+		}
+
 		if ( !( pfixOp && /\W/.test( char ) ) ) {
 			pfixOp = ( char === '+' && str[ i - 1 ] === '+' ) || ( char === '-' && str[ i - 1 ] === '-' );
 		}
 
-		if ( char === '<' && ( !lastSignificantChar || beforeJsx.test( lastSignificantChar ) ) ) {
+		if ( char === '<' && ( !lastSignificantChar || beforeJsxChars.test( lastSignificantChar ) ) ) {
 			stack.push( base );
 			return jsxTagStart;
 		}
 
-		if ( /\S/.test( char ) ) lastSignificantChar = char;
+		if ( nonWhitespace.test( char ) ) {
+			lastSignificantChar = char;
+			lastSignificantCharIndex = i;
+		}
 		return base;
 	}
 
@@ -270,38 +301,6 @@ export function find ( str ) {
 	if ( state.name === 'lineComment' ) state( '\n', str.length );
 
 	return found;
-}
-
-function tokenClosesExpression ( substr, found ) {
-	substr = _erase( substr, found );
-
-	let token = ambiguous.exec( substr );
-	if ( token ) token = token[1];
-
-	if ( token === ')' ) {
-		let count = 0;
-		let i = substr.length;
-		while ( i-- ) {
-			if ( substr[i] === ')' ) {
-				count += 1;
-			}
-
-			if ( substr[i] === '(' ) {
-				count -= 1;
-				if ( count === 0 ) {
-					i -= 1;
-					break;
-				}
-			}
-		}
-
-		// if parenthesized expression is immediately preceded by `if`/`while`, it's not closing an expression
-		while ( /\s/.test( substr[i - 1] ) ) i -= 1;
-		if ( substr.slice( i - 2, i ) === 'if' || substr.slice( i - 5, i ) === 'while' ) return false;
-	}
-
-	// TODO handle }, ++ and -- tokens immediately followed by / character
-	return true;
 }
 
 export function erase ( str ) {

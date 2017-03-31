@@ -210,6 +210,11 @@ describe( 'tippex', () => {
 			'handles curlies inside a regex following export default (#1)': [
 				'export default /^}{/',
 				'export default /   /'
+			],
+
+			'handles / character after parenthesized expression': [
+				'( a + b ) / /x+/.exec( y )[0].length',
+				'( a + b ) / /  /.exec( y )[0].length'
 			]
 		};
 
