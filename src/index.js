@@ -67,6 +67,8 @@ export function find ( str ) {
 	}
 
 	function base ( char, i ) {
+		// the order of these tests is based on which characters are
+		// typically more prevalent in a codebase
 		if ( char === '(' ) {
 			lsci = i;
 			openingParenPositions[ parenDepth++ ] = i;
@@ -138,13 +140,13 @@ export function find ( str ) {
 				regexEnabled = true;
 			}
 
-			return start = i, slash;
+			start = i;
+			return slash;
 		}
 
-		if ( char === '`' ) return start = i + 1, templateString;
-
-		if ( !pfixOp ) {
-			pfixOp = ( char === '+' && str[ i - 1 ] === '+' ) || ( char === '-' && str[ i - 1 ] === '-' );
+		if ( char === '`' ) {
+			start = i + 1;
+			return templateString;
 		}
 
 		if ( char === '<' && ( !~lsci || beforeJsxChars.test( lsc() ) ) ) {
@@ -152,9 +154,13 @@ export function find ( str ) {
 			return jsxTagStart;
 		}
 
-		if ( !isWhitespace( char ) ) {
-			lsci = i;
+		if ( char === '+' && !pfixOp && str[ i - 1 ] === '+' ) {
+			pfixOp = true;
+		} else if ( char === '-' && !pfixOp && str[ i - 1 ] === '-' ) {
+			pfixOp = true;
 		}
+
+		if ( !isWhitespace( char ) ) lsci = i;
 		return base;
 	}
 
