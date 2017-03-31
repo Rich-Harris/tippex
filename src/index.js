@@ -9,7 +9,30 @@ const keywordChars = /[a-z]/;
 const beforeJsxChars = /[=:;,({}[&+]/;
 
 const whitespace = /\s/;
-const nonWhitespace = /\S/;
+
+function isWhitespace ( char ) {
+	return whitespace.test( char );
+}
+
+function isPunctuatorChar ( char ) {
+	return punctuatorChars.test( char );
+}
+
+function isKeywordChar ( char ) {
+	return keywordChars.test( char );
+}
+
+function isPunctuator ( str ) {
+	return punctuators.test( str );
+}
+
+function isKeyword ( str ) {
+	return keywords.test( str );
+}
+
+function isAmbiguous ( str ) {
+	return ambiguous.test( str );
+}
 
 export function find ( str ) {
 	let quote;
@@ -33,7 +56,7 @@ export function find ( str ) {
 	function tokenClosesExpression () {
 		if ( lastSignificantChar === ')' ) {
 			let c = parenMatches[ lastSignificantCharIndex ];
-			while ( whitespace.test( str[ c - 1 ] ) ) c -= 1;
+			while ( isWhitespace( str[ c - 1 ] ) ) c -= 1;
 
 			// if parenthesized expression is immediately preceded by `if`/`while`, it's not closing an expression
 			if ( /(if|while)$/.test( str.slice( c - 5, c ) ) ) return false;
@@ -50,19 +73,19 @@ export function find ( str ) {
 			// http://stackoverflow.com/questions/5519596/when-parsing-javascript-what-determines-the-meaning-of-a-slash/27120110#27120110
 
 			let previousTokenEnd = i;
-			while ( previousTokenEnd > 0 && /\s/.test( str[ previousTokenEnd - 1 ] ) ) {
+			while ( previousTokenEnd > 0 && isWhitespace( str[ previousTokenEnd - 1 ] ) ) {
 				previousTokenEnd -= 1;
 			}
 
 			let previousTokenStart = previousTokenEnd;
 
 			if ( previousTokenEnd > 0 ) {
-				if ( punctuatorChars.test( str[ previousTokenStart - 1 ] ) ) {
-					while ( punctuatorChars.test( str[ previousTokenStart - 1 ] ) ) {
+				if ( isPunctuatorChar( str[ previousTokenStart - 1 ] ) ) {
+					while ( isPunctuatorChar( str[ previousTokenStart - 1 ] ) ) {
 						previousTokenStart -= 1;
 					}
 				} else {
-					while ( keywordChars.test( str[ previousTokenStart - 1 ] ) ) {
+					while ( isKeywordChar( str[ previousTokenStart - 1 ] ) ) {
 						previousTokenStart -= 1;
 					}
 				}
@@ -70,9 +93,9 @@ export function find ( str ) {
 				const previousToken = str.slice( previousTokenStart, previousTokenEnd );
 
 				if ( previousTokenStart !== previousTokenEnd ) {
-					if ( keywords.test( previousToken ) || punctuators.test( previousToken ) ) {
+					if ( isKeyword( previousToken ) || isPunctuator( previousToken ) ) {
 						regexEnabled = true;
-					} else if ( ambiguous.test( previousToken ) && !tokenClosesExpression( str.substr( 0, i ), found ) ) {
+					} else if ( isAmbiguous( previousToken ) && !tokenClosesExpression() ) {
 						regexEnabled = true; // TODO save this determination for when it's necessary?
 					} else {
 						regexEnabled = false;
@@ -111,7 +134,7 @@ export function find ( str ) {
 			parenMatches[i] = openingParenPositions[ --parenDepth ];
 		}
 
-		if ( !( pfixOp && /\W/.test( char ) ) ) {
+		if ( !pfixOp ) {
 			pfixOp = ( char === '+' && str[ i - 1 ] === '+' ) || ( char === '-' && str[ i - 1 ] === '-' );
 		}
 
@@ -120,7 +143,7 @@ export function find ( str ) {
 			return jsxTagStart;
 		}
 
-		if ( nonWhitespace.test( char ) ) {
+		if ( !isWhitespace( char ) ) {
 			lastSignificantChar = char;
 			lastSignificantCharIndex = i;
 		}
