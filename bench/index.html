@@ -1,10 +1,31 @@
 <script src='../dist/tippex.umd.js'></script>
 <script>
-	fetch( 'fixture/rollup.es.js' ).then( r => r.text() ).then( source => {
-		console.profile( 'tippex.find' );
-		const found = tippex.find( source );
-		console.profileEnd( 'tippex.find' );
+	const samples = [
+		'basic.js',
+		'jquery@3.2.1.js',
+		'lodash@4.17.4.js',
+		'mithril@1.1.0.js',
+		'react-dom@15.4.2.js',
+		'rollup.es.js'
+	];
 
-		console.log( `found`, found )
-	});
+	function next () {
+		const sample = samples.shift();
+
+		if ( !sample ) return;
+
+		fetch( `fixture/${sample}` ).then( r => r.text() ).then( source => {
+			console.group( sample );
+			console.profile( sample );
+			const found = tippex.find( source );
+			console.profileEnd( sample );
+
+			console.log( `found`, found )
+			console.groupEnd();
+
+			setTimeout( next, 100 );
+		});
+	}
+
+	next();
 </script>
