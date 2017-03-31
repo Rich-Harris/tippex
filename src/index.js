@@ -21,6 +21,9 @@ export function find ( str ) {
 	let found = [];
 	let state = base;
 
+	let lastSignificantChar = null;
+	let lastSignificantCharIndex = -1;
+
 	function base ( char, i ) {
 		if ( char === '/' ) {
 
@@ -70,7 +73,12 @@ export function find ( str ) {
 		if ( char === '"' || char === "'" ) return start = i, quote = char, stack.push( base ), string;
 		if ( char === '`' ) return start = i + 1, templateString;
 
-		if ( char === '{' ) return stack.push( base ), base;
+		if ( char === '{' ) {
+			lastSignificantChar = char;
+			stack.push( base );
+			return base;
+		}
+
 		if ( char === '}' ) {
 			return start = i + 1, stack.pop();
 		}
@@ -79,25 +87,12 @@ export function find ( str ) {
 			pfixOp = ( char === '+' && str[ i - 1 ] === '+' ) || ( char === '-' && str[ i - 1 ] === '-' );
 		}
 
-		if ( char === '<' ) {
-			let substr = str.substr( 0, i );
-			substr = _erase( substr, found ).trim();
-			if ( beforeJsx.test( substr ) ) {
-				stack.push( base );
-				return jsxTagStart;
-			}
-
-			// console.log( i );
-			// let c = i;
-			// while ( c > 0 && /\s/.test( str[ c - 1 ] ) ) c -= 1;
-
-			// console.log( `c, str[c - 1]`, c, str[c - 1] )
-
-			// if ( c === 0 || beforeJsxChars.test( str[ c - 1 ] ) ) {
-			// 	return stack.push( base ), jsxTagStart;
-			// }
+		if ( char === '<' && ( !lastSignificantChar || beforeJsx.test( lastSignificantChar ) ) ) {
+			stack.push( base );
+			return jsxTagStart;
 		}
 
+		if ( /\S/.test( char ) ) lastSignificantChar = char;
 		return base;
 	}
 
@@ -309,22 +304,6 @@ function tokenClosesExpression ( substr, found ) {
 	return true;
 }
 
-function spaces ( count ) {
-	let spaces = '';
-	while ( count-- ) spaces += ' ';
-	return spaces;
-}
-
-const erasers = {
-	string: chunk => spaces( chunk.value.length ),
-	line: chunk => spaces( chunk.value.length ),
-	block: chunk => chunk.value.split( '\n' ).map( line => spaces( line.length ) ).join( '\n' ),
-	regex: chunk => spaces( chunk.value.length ),
-	templateChunk: chunk => spaces( chunk.value.length ),
-	templateEnd: chunk => spaces( chunk.value.length ),
-	jsx: chunk => spaces( chunk.value.length )
-};
-
 export function erase ( str ) {
 	const found = find( str );
 	return _erase( str, found );
@@ -337,7 +316,7 @@ function _erase ( str, found ) {
 	for ( let i = 0; i < found.length; i += 1 ) {
 		const chunk = found[i];
 		erased += str.slice( charIndex, chunk.start );
-		erased += erasers[ chunk.type ]( chunk );
+		erased += chunk.value.replace( /[^\n]/g, ' ' );
 
 		charIndex = chunk.end;
 	}
