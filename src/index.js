@@ -59,7 +59,7 @@ export function find ( str ) {
 			while ( isWhitespace( str[ c - 1 ] ) ) c -= 1;
 
 			// if parenthesized expression is immediately preceded by `if`/`while`, it's not closing an expression
-			if ( /(if|while)$/.test( str.slice( c - 5, c ) ) ) return false;
+			return !/(if|while)$/.test( str.slice( c - 5, c ) );
 		}
 
 		// TODO handle }, ++ and -- tokens immediately followed by / character
@@ -103,34 +103,26 @@ export function find ( str ) {
 			// could be start of regex literal OR division punctuator. Solution via
 			// http://stackoverflow.com/questions/5519596/when-parsing-javascript-what-determines-the-meaning-of-a-slash/27120110#27120110
 
-			let previousTokenEnd = i;
-			while ( previousTokenEnd > 0 && isWhitespace( str[ previousTokenEnd - 1 ] ) ) {
-				previousTokenEnd -= 1;
-			}
+			let b = i;
+			while ( b > 0 && isWhitespace( str[ b - 1 ] ) ) b -= 1;
 
-			let previousTokenStart = previousTokenEnd;
+			if ( b > 0 ) {
+				let a = b;
 
-			if ( previousTokenEnd > 0 ) {
-				if ( isPunctuatorChar( str[ previousTokenStart - 1 ] ) ) {
-					while ( previousTokenStart > 0 && isPunctuatorChar( str[ previousTokenStart - 1 ] ) ) {
-						previousTokenStart -= 1;
-					}
+				if ( isPunctuatorChar( str[ a - 1 ] ) ) {
+					while ( a > 0 && isPunctuatorChar( str[ a - 1 ] ) ) a -= 1;
 				} else {
-					while ( previousTokenStart > 0 && isKeywordChar( str[ previousTokenStart - 1 ] ) ) {
-						previousTokenStart -= 1;
-					}
+					while ( a > 0 && isKeywordChar( str[ a - 1 ] ) ) a -= 1;
 				}
 
-				const previousToken = str.slice( previousTokenStart, previousTokenEnd );
+				const token = str.slice( a, b );
 
-				regexEnabled = previousToken && (
-					isKeyword( previousToken ) ||
-					isPunctuator( previousToken ) ||
-					( isAmbiguous( previousToken ) && !tokenClosesExpression() )
-				);
-			}
-
-			else {
+				regexEnabled = token ? (
+					isKeyword( token ) ||
+					isPunctuator( token ) ||
+					( isAmbiguous( token ) && !tokenClosesExpression() )
+				) : false;
+			} else {
 				regexEnabled = true;
 			}
 
