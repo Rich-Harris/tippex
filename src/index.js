@@ -1,6 +1,6 @@
 import { locate } from 'locate-character';
 
-const keywords = /(case|default|delete|do|else|in|instanceof|new|return|throw|typeof|void)\s*$/;
+const keywords = /\b(case|default|delete|do|else|in|instanceof|new|return|throw|typeof|void)\s*$/;
 const punctuators = /(^|\{|\(|\[\.|;|,|<|>|<=|>=|==|!=|===|!==|\+|-|\*\%|<<|>>|>>>|&|\||\^|!|~|&&|\|\||\?|:|=|\+=|-=|\*=|%=|<<=|>>=|>>>=|&=|\|=|\^=|\/=|\/)\s*$/;
 const ambiguous = /(\}|\)|\+\+|--)\s*$/;
 
@@ -112,11 +112,11 @@ export function find ( str ) {
 
 			if ( previousTokenEnd > 0 ) {
 				if ( isPunctuatorChar( str[ previousTokenStart - 1 ] ) ) {
-					while ( isPunctuatorChar( str[ previousTokenStart - 1 ] ) ) {
+					while ( previousTokenStart > 0 && isPunctuatorChar( str[ previousTokenStart - 1 ] ) ) {
 						previousTokenStart -= 1;
 					}
 				} else {
-					while ( isKeywordChar( str[ previousTokenStart - 1 ] ) ) {
+					while ( previousTokenStart > 0 && isKeywordChar( str[ previousTokenStart - 1 ] ) ) {
 						previousTokenStart -= 1;
 					}
 				}

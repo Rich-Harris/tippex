@@ -220,6 +220,11 @@ describe( 'tippex', () => {
 			'handles regex with escaped slash': [
 				'var regex = /\\//;',
 				'var regex = /  /;'
+			],
+
+			'handles slash after almost-keyword': [
+				`dodo / 'nonsense'`,
+				`dodo / '        '`
 			]
 		};
 
