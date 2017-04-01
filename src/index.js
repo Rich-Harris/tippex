@@ -123,17 +123,11 @@ export function find ( str ) {
 
 				const previousToken = str.slice( previousTokenStart, previousTokenEnd );
 
-				if ( previousTokenStart !== previousTokenEnd ) {
-					if ( isKeyword( previousToken ) || isPunctuator( previousToken ) ) {
-						regexEnabled = true;
-					} else if ( isAmbiguous( previousToken ) && !tokenClosesExpression() ) {
-						regexEnabled = true; // TODO save this determination for when it's necessary?
-					} else {
-						regexEnabled = false;
-					}
-				} else {
-					regexEnabled = false;
-				}
+				regexEnabled = previousToken && (
+					isKeyword( previousToken ) ||
+					isPunctuator( previousToken ) ||
+					( isAmbiguous( previousToken ) && !tokenClosesExpression() )
+				);
 			}
 
 			else {
