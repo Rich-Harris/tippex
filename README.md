@@ -13,12 +13,12 @@ import a from './a.js';
 
 Instead, you might generate an abstract syntax tree with a parser like [Acorn](https://github.com/ternjs/acorn), and traverse the AST looking for nodes of a specific type. But for a lot of simple tasks that's overkill – parsing is expensive, traversing is a lot less simple than using regular expressions, and if you're doing anything in the browser it's better to avoid large dependencies.
 
-Tippex offers some middle ground. It's as robust as a full-fledged parser, but miniscule – and an order of magnitude faster. (Americans: Tippex is what you oddballs call 'Liquid Paper' or 'Wite-Out'.)
+Tippex offers some middle ground. It's as robust as a full-fledged parser, but miniscule – and much faster. (Americans: Tippex is what you oddballs call 'Liquid Paper' or 'Wite-Out'.)
 
 
 ## What does it do?
 
-Tippex simply replaces comments with equivalent whitespace, and removes the contents of strings (including ES6 template strings) and regular expressions.
+Tippex simply replaces the contents of strings (including ES6 template strings), regular expressions and comments with the equivalent whitespace.
 
 So this...
 
@@ -37,10 +37,10 @@ var f = `an ${ 'unnecessarily' ? `${'complicated'}` : `${'template'}` } string`;
 ...becomes this:
 
 ```js
-var a = 1;                
+var a = 1; //
+/*
 
-
-
+*/
 var b = 2;
 var c = /   /;
 var d = '         ';
@@ -48,7 +48,7 @@ var e = "              ";
 var f = `   ${ '             ' ? `${'           '}` : `${'        '}` }       `;
 ```
 
-Once that's done, you can search for patterns (such as `var` or ` = `) in complete confidence that you won't get any false positives.
+Once that's done, you can search for patterns (such as `var` or ` = ` or `import`) in complete confidence that you won't get any false positives.
 
 
 ## Installation
@@ -57,7 +57,7 @@ Once that's done, you can search for patterns (such as `var` or ` = `) in comple
 npm install --save tippex
 ```
 
-...or download from unpkg.com ([UMD version](https://unpkg.com/tippex), [ES6 exports version](https://unpkg.com/tippex/dist/tippex.es6.js)).
+...or download from unpkg.com ([UMD version](https://unpkg.com/tippex), [ES6 exports version](https://unpkg.com/tippex/dist/tippex.es.js)).
 
 
 ## Usage
@@ -66,7 +66,7 @@ npm install --save tippex
 import * as tippex from 'tippex'; // or `var tippex = require('tippex')`, etc
 
 var erased = tippex.erase( 'var a = 1; // line comment' );
-// -> 'var a = 1;                '
+// -> 'var a = 1; //             '
 
 var found = tippex.find( 'var a = 1; // line comment' );
 // -> [{

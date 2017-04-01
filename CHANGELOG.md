@@ -1,5 +1,12 @@
 # Tippex changelog
 
+## 3.0.0
+
+* Massive performance improvements, especially with large files ([#17](https://github.com/Rich-Harris/tippex/issues/17))
+* Found tokens now take the form `{ start, end, type, value }` — no more `inner` and `outer`
+* Text content inside JSX tags is removed
+* Fix bug with keyword false positives ([#18](https://github.com/Rich-Harris/tippex/issues/18))
+
 ## 2.3.1
 
 * Handle escaped slash at start of regex ([#15](https://github.com/Rich-Harris/tippex/issues/15))
