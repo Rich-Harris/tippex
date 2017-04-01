@@ -1,4 +1,4 @@
-import getLocation from './getLocation.js';
+import { locate } from 'locate-character';
 
 const keywords = /(case|default|delete|do|else|in|instanceof|new|return|throw|typeof|void)\s*$/;
 const punctuators = /(^|\{|\(|\[\.|;|,|<|>|<=|>=|==|!=|===|!==|\+|-|\*\%|<<|>>|>>>|&|\||\^|!|~|&&|\|\||\?|:|=|\+=|-=|\*=|%=|<<=|>>=|>>>=|&=|\|=|\^=|\/=|\/)\s*$/;
@@ -168,6 +168,7 @@ export function find ( str ) {
 		if ( char === '/' ) return start = i + 1, lineComment;
 		if ( char === '*' ) return start = i + 1, blockComment;
 		if ( char === '[' ) return regexEnabled ? ( start = i, regexCharacter ) : base;
+		if ( char === '\\' ) return start = i, escapedFrom = regex, escaped;
 		return regexEnabled && !pfixOp ? ( start = i, regex ) : base;
 	}
 
@@ -320,7 +321,7 @@ export function find ( str ) {
 
 	for ( let i = 0; i < str.length; i += 1 ) {
 		if ( !state ) {
-			const { line, column } = getLocation( str, i );
+			const { line, column } = locate( str, i, { offsetLine: 1 });
 			const before = str.slice( 0, i );
 			const beforeLine = /(^|\n).+$/.exec( before )[0];
 			const after = str.slice( i );

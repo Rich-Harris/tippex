@@ -1,5 +1,9 @@
 # Tippex changelog
 
+## 2.3.1
+
+* Handle escaped slash at start of regex ([#15](https://github.com/Rich-Harris/tippex/issues/15))
+
 ## 2.3.0
 
 * JSX support ([#14](https://github.com/Rich-Harris/tippex/pull/14))

@@ -215,6 +215,11 @@ describe( 'tippex', () => {
 			'handles / character after parenthesized expression': [
 				'( a + b ) / /x+/.exec( y )[0].length',
 				'( a + b ) / /  /.exec( y )[0].length'
+			],
+
+			'handles regex with escaped slash': [
+				'var regex = /\\//;',
+				'var regex = /  /;'
 			]
 		};
 
