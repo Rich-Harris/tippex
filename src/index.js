@@ -93,7 +93,7 @@ export function find ( str ) {
 		}
 
 		if ( char === '"' || char === "'" ) {
-			start = i;
+			start = i + 1;
 			quote = char;
 			stack.push( base );
 			return string;
@@ -184,9 +184,9 @@ export function find ( str ) {
 		if ( char === '\\' ) return escapedFrom = string, escaped;
 		if ( char === quote ) {
 			const end = i;
-			const value = str.slice( start + 1, end );
+			const value = str.slice( start, end );
 
-			found.push({ start: start + 1, end, value, type: 'string' });
+			found.push({ start, end, value, type: 'string' });
 
 			return stack.pop();
 		}
@@ -236,7 +236,7 @@ export function find ( str ) {
 	}
 
 	function jsxTag ( char, i ) {
-		if ( char === '"' || char === "'" ) return start = i, quote = char, stack.push( jsxTag ), string;
+		if ( char === '"' || char === "'" ) return start = i + 1, quote = char, stack.push( jsxTag ), string;
 		if ( char === '{' ) return stack.push( jsxTag ), base;
 		if ( char === '>' ) {
 			if ( jsxTagDepth <= 0 ) return base;
