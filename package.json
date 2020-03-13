@@ -22,7 +22,7 @@
     "lint": "eslint src"
   },
   "devDependencies": {
-    "acorn": "^4.0.11",
+    "acorn": "^7.1.1",
     "benchmark": "^2.1.3",
     "buble": "^0.15.2",
     "console-group": "^0.3.3",
